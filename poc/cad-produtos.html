@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Cadastro de Produtos</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div id="crudRoot"></div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./store.js"></script>
+    <script src="./crud-page.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+      Poc.renderShell({ activeRoute: "cad-produtos" });
+      PocCrudPage.render({
+        entityKey: "produtos",
+        title: "Cadastro de Produtos",
+        fields: [
+          { key: "codigo", label: "Código", required: true, placeholder: "Ex.: SPF VIDA 372-BS" },
+          { key: "descricao", label: "Descrição", required: true, placeholder: "Descrição do produto" },
+          { key: "tipoComissao", label: "Tipo Comissão", required: true, placeholder: "Percentual / Valor Fixo" },
+          { key: "valor", label: "Valor", placeholder: "Ex.: 2,5% ou 150,00" },
+          { key: "status", label: "Status", placeholder: "Ativo" },
+        ],
+      });
+    </script>
+  </body>
+</html>
+
+

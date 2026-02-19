@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Importação</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div class="card">
+          <div class="row row--between row--wrap">
+            <div>
+              <h1>Importação (POC)</h1>
+              <p class="muted">
+                Cruzamento por <strong>Código da Proposta</strong>. Colunas e fórmulas detalhadas serão definidas mais à frente.
+              </p>
+            </div>
+            <div class="pill">
+              <span class="pill__label">Encoding</span>
+              <select id="importEncoding" class="pill__select" title="Encoding de leitura do arquivo">
+                <option value="utf-8">UTF-8</option>
+                <option value="windows-1252">Windows-1252</option>
+                <option value="iso-8859-1">ISO-8859-1</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid--2">
+            <label class="field">
+              <span>Vendas.csv</span>
+              <input id="fileVendas" type="file" accept=".csv,text/csv" />
+            </label>
+            <label class="field">
+              <span>Itens.csv</span>
+              <input id="fileItens" type="file" accept=".csv,text/csv" />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button id="btnProcessar" class="btn btn--primary">Processar</button>
+            <button id="btnLimpar" class="btn btn--ghost">Limpar</button>
+          </div>
+        </div>
+
+        <div id="importSummary" class="card card--hidden"></div>
+
+        <div class="grid grid--2">
+          <div id="importStagingVendas" class="card card--hidden"></div>
+          <div id="importStagingItens" class="card card--hidden"></div>
+        </div>
+
+        <div id="importCross" class="card card--hidden"></div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./importacao.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+      Poc.renderShell({ activeRoute: "importacao" });
+      PocImportacao.init();
+    </script>
+  </body>
+</html>
+
+

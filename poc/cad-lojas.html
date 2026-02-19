@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Cadastro de Lojas</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div id="crudRoot"></div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./store.js"></script>
+    <script src="./crud-page.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+      Poc.renderShell({ activeRoute: "cad-lojas" });
+      PocCrudPage.render({
+        entityKey: "lojas",
+        title: "Cadastro de Lojas",
+        fields: [
+          { key: "razaoSocial", label: "Razão Social", required: true, placeholder: "Ex.: ARX NEGOCIOS AUTOMOTIVOS LTDA" },
+          { key: "nomeFantasia", label: "Nome Fantasia", placeholder: "Ex.: ARX Auto Mall" },
+          { key: "cnpj", label: "CNPJ", required: true, placeholder: "00.000.000/0000-00" },
+          { key: "email", label: "E-mail", type: "email", placeholder: "contato@loja.com" },
+          { key: "telefone", label: "Telefone", placeholder: "(00)00000-0000" },
+          { key: "status", label: "Status", placeholder: "Ativo" },
+        ],
+      });
+    </script>
+  </body>
+</html>
+
+

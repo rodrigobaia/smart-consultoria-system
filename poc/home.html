@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Home</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div class="card">
+          <h1>Home</h1>
+          <p>Esta POC valida o fluxo do sistema antes do Blazor.</p>
+          <ul class="bullets">
+            <li>Login simulado + menus por perfil</li>
+            <li>Importar <code>Vendas.csv</code> e <code>Itens.csv</code> (no navegador)</li>
+            <li>Ver staging/erros</li>
+            <li>Cruzar por <strong>Código da Proposta</strong></li>
+            <li>Navegar por propostas e itens</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2 style="margin:0 0 8px 0; font-size:16px;">Atalhos</h2>
+          <div class="actions">
+            <a class="btn btn--primary" href="./importacao.html">Importação</a>
+            <a class="btn btn--ghost" href="./propostas.html">Propostas</a>
+            <a class="btn btn--ghost" href="./comissoes.html">Comissões (mock)</a>
+          </div>
+          <p class="muted" style="margin-top:10px;">
+            Observação: colunas completas e fórmulas serão documentadas mais à frente.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script>
+      Poc.requireAuth();
+      Poc.renderShell({ activeRoute: "home" });
+    </script>
+  </body>
+</html>
+
+

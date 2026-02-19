@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Cadastro de Colaboradores</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div id="crudRoot"></div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./store.js"></script>
+    <script src="./crud-page.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+      Poc.renderShell({ activeRoute: "cad-colaboradores" });
+      PocCrudPage.render({
+        entityKey: "colaboradores",
+        title: "Cadastro de Colaboradores",
+        fields: [
+          { key: "nome", label: "Nome", required: true, placeholder: "Nome completo" },
+          { key: "cpf", label: "CPF", required: true, placeholder: "000.000.000-00" },
+          { key: "email", label: "E-mail", type: "email", placeholder: "email@exemplo.com" },
+          { key: "telefone", label: "Telefone", placeholder: "(00)00000-0000" },
+          { key: "pix", label: "PIX", placeholder: "chave pix" },
+          { key: "status", label: "Status", placeholder: "Ativo" },
+        ],
+      });
+    </script>
+  </body>
+</html>
+
+

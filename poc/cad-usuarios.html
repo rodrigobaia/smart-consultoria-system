@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Cadastro de Usuários</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div id="crudRoot"></div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./store.js"></script>
+    <script src="./crud-page.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+      Poc.renderShell({ activeRoute: "cad-usuarios" });
+      PocCrudPage.render({
+        entityKey: "usuarios",
+        title: "Cadastro de Usuários",
+        fields: [
+          { key: "username", label: "Usuário", required: true, placeholder: "ex.: rodrigo.baia" },
+          { key: "perfil", label: "Perfil (Role)", required: true, placeholder: "Administrador/Gestor/Consultoria/Operador" },
+          { key: "status", label: "Status", required: true, placeholder: "Ativo/Inativo/Bloqueado" },
+          { key: "twofa", label: "2FA", placeholder: "Sim/Não" },
+        ],
+      });
+    </script>
+  </body>
+</html>
+
+

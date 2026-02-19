@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Comissões</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+      <section class="view">
+        <div class="card">
+          <h1>Comissões (mock)</h1>
+          <p class="muted">
+            Apenas para validar o fluxo de consulta. Fórmulas reais serão definidas e documentadas mais à frente.
+          </p>
+          <div id="comissoesWrap"></div>
+          <div id="comissoesEmpty" class="muted" style="margin-top:10px; display:none;">
+            Nenhum dado importado ainda. Vá em <a class="link" href="./importacao.html">Importação</a>.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./poc.js"></script>
+    <script src="./comissoes.js"></script>
+    <script>
+      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
+      Poc.renderShell({ activeRoute: "comissoes" });
+      PocComissoes.init();
+    </script>
+  </body>
+</html>
+
+
