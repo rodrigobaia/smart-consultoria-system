@@ -1,0 +1,70 @@
+Smart Consultoria System
+
+**Objetivo**
+Este sistema tem como objetivo fazer gestão de comissão e ganhos relacionados a financiamentos.
+
+Este sistema terá os seguintes autores
+
+*** Autores ***
+1- Administrador
+    Tem como responsabilidade cadastrar, usuários, lojas, importar planilhas
+2- Gestor
+    Tem como responsabilidade cadastrar, usuários, lojas, importar planilhas
+    Associar loja ao usuário
+3- Consultoria
+    Consultar comissão
+4- Operador
+    Consultar comissão
+
+***Funcionalidades***
+1- Cadastros
+    a) Usuários
+        Este cadastro será feito pelo o Administrador e/ou Gestor.
+        Os campos necessários são            
+            usuário e senha
+            2FA    
+            Perfil de acesso
+            Status (Ativo, Inativo, Bloqueado)
+            
+    b) Colaborador
+        Nome, CPF, E-mail, Telefone (Opcional), DN, Endereço (Opcional), PIX
+        Associar Loja(s) 
+        Associar Usuario 
+
+    c) Lojas
+        Razão Social, Nome Fantasia, Endereços, CNPJ, Telefone, E-mail, Cliente desde
+            Dados do Socios
+                Nome, Telefone e E-mail
+        c.1) Consciliar contrao de adesão, com valor da mensalidade, data inicio do contrato, data do proximo reajuste da mensalidade, descrição do contrato, validade do contrato
+    d) Produtos
+        Código
+        Descrição
+        Tipo de Comissão (Percentual/ Valor Fixo)
+        Valor
+        Status (Ativo, Inativo, Bloqueado)
+
+2-Definição de Comissão
+    Neste ponto será definido a comisão de produto com perfil Operador, Consultor e Social, será tipo uma matriz.
+    Será necessário manter um historico das alterações
+3- Controle de pagamento de comissão para consultor, operador e Gestor   
+
+4- Dashboard
+99- Relatórios
+    a) Comissão por Perfil
+    b)
+
+
+Regra para remuneração de incentivo para Consultor
+Essa operação será realizada de forma manual inicialmente. Segue a explicação do funcionamento:
+
+Atuo como promotor do Banco Daycoval. Nesse modelo, o consultor externo terá como principal responsabilidade visitar lojas parceiras e realizar o cadastro do Banco Daycoval nessas operações.
+
+A remuneração do consultor será baseada na produção gerada pelas lojas cadastradas por ele, conforme abaixo:
+
+O consultor externo receberá 1% de comissão sobre todo o volume financiado pelas lojas que ele cadastrou.
+
+Exemplo prático:
+Se o consultor A cadastrar 30 lojas e essas lojas gerarem uma produção total de R$ 750.000,00 em financiamentos, o consultor receberá 1% sobre esse valor, ou seja, R$ 7.500,00 de comissão.
+
+Além disso, atuo também como representante do Banco BBC. Para o Banco BBC, o consultor externo seguirá o mesmo modelo de cálculo de comissão, aplicando-se a mesma regra descrita acima.    
+
