@@ -1,38 +1,44 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>POC — Cadastro de Bancos / IF</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div id="app"></div>
 
-    <div id="content" style="display:none">
-      <section class="view">
-        <div id="crudRoot"></div>
-      </section>
-    </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POC — Cadastro de Bancos / IF</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
 
-    <script src="./poc.js"></script>
-    <script src="./store.js"></script>
-    <script src="./crud-page.js"></script>
-    <script>
-      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
-      Poc.renderShell({ activeRoute: "cad-bancos" });
-      PocCrudPage.render({
-        entityKey: "bancos",
-        title: "Cadastro de Bancos / Instituições Financeiras",
-        fields: [
-          { key: "nome", label: "Nome", required: true, placeholder: "Ex.: BANCO BBC S.A" },
-          { key: "codigoExterno", label: "Código Externo", placeholder: "Ex.: BBC / DAYCOVAL / etc." },
-          { key: "status", label: "Status", placeholder: "Ativo" },
-          { key: "observacao", label: "Observação", placeholder: "Opcional" },
-        ],
-      });
-    </script>
-  </body>
+<body>
+  <div id="app"></div>
+
+  <div id="content" style="display:none">
+    <section class="view">
+      <div id="crudRoot"></div>
+    </section>
+  </div>
+
+  <script src="./poc.js"></script>
+  <script src="./store.js"></script>
+  <script src="./crud-page.js"></script>
+  <script>
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+    Poc.renderShell({ activeRoute: "cad-bancos" });
+    PocCrudPage.render({
+      entityKey: "bancos",
+      title: "Cadastro de Bancos / Instituições Financeiras",
+      fields: [
+        { key: "nome", label: "Nome", required: true, placeholder: "Ex.: BANCO BBC S.A" },
+        { key: "codigoExterno", label: "Código Externo", placeholder: "Ex.: BBC / DAYCOVAL / etc." },
+        {
+          key: "status",
+          label: "Status",
+          type: "select",
+          options: ["Ativo", "Inativo"]
+        },
+        { key: "observacao", label: "Observação", placeholder: "Opcional" },
+      ],
+    });
+  </script>
+</body>
+
 </html>
-
-

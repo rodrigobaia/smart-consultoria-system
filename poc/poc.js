@@ -3,6 +3,7 @@
 (function () {
   const STORAGE_SESSION = "poc_session_v1";
   const STORAGE_IMPORT = "poc_import_v1";
+  const STORAGE_THEME = "poc_theme_v1";
 
   function $(sel) {
     const el = document.querySelector(sel);
@@ -94,6 +95,30 @@
     }
   }
 
+  function getTheme() {
+    return localStorage.getItem(STORAGE_THEME) || "light";
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(STORAGE_THEME, theme);
+  }
+
+  function toggleTheme() {
+    const current = getTheme();
+    const next = current === "light" ? "dark" : "light";
+    applyTheme(next);
+    updateThemeIcon();
+  }
+
+  function updateThemeIcon() {
+    const btn = document.getElementById("btnToggleTheme");
+    if (!btn) return;
+    const isDark = getTheme() === "dark";
+    btn.innerHTML = isDark ? "☀️" : "🌙";
+    btn.title = isDark ? "Mudar para tema claro" : "Mudar para tema escuro";
+  }
+
   function openNav() {
     const nav = document.getElementById("nav");
     const bd = document.getElementById("backdrop");
@@ -168,6 +193,7 @@
             <div class="subtitle">POC (HTML/CSS/JS)</div>
           </div>
           <div class="topbar__right">
+            <button id="btnToggleTheme" class="icon-btn" aria-label="Alternar tema" title="Alternar tema"></button>
             <div id="userChip" class="chip ${sess ? "" : "chip--hidden"}">${sess ? escapeHtml(`${sess.user} • ${sess.role}`) : ""}</div>
             <button id="btnLogout" class="btn btn--ghost ${sess ? "" : "btn--hidden"}">Sair</button>
           </div>
@@ -234,6 +260,12 @@
 
     applyRoleToNav(sess);
     setActiveNav(activeRoute);
+    
+    // Theme initialization
+    const initialTheme = getTheme();
+    applyTheme(initialTheme);
+    updateThemeIcon();
+    document.getElementById("btnToggleTheme")?.addEventListener("click", toggleTheme);
   }
 
   window.Poc = {

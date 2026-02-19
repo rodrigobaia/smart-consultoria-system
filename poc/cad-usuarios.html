@@ -26,9 +26,26 @@
         title: "Cadastro de Usuários",
         fields: [
           { key: "username", label: "Usuário", required: true, placeholder: "ex.: rodrigo.baia" },
-          { key: "perfil", label: "Perfil (Role)", required: true, placeholder: "Administrador/Gestor/Consultoria/Operador" },
-          { key: "status", label: "Status", required: true, placeholder: "Ativo/Inativo/Bloqueado" },
-          { key: "twofa", label: "2FA", placeholder: "Sim/Não" },
+          { 
+            key: "perfil", 
+            label: "Perfil (Role)", 
+            required: true, 
+            type: "select",
+            options: ["Administrador", "Gestor", "Consultoria", "Operador"]
+          },
+          { 
+            key: "status", 
+            label: "Status", 
+            required: true, 
+            type: "select",
+            options: ["Ativo", "Inativo", "Bloqueado"]
+          },
+          { 
+            key: "twofa", 
+            label: "2FA", 
+            type: "select",
+            options: ["Sim", "Não"]
+          },
         ],
       });
     </script>
