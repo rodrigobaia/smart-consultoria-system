@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>POC — Cadastro de Bancos / IF</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 
 <body>
@@ -17,15 +17,15 @@
     </section>
   </div>
 
-  <script src="./poc.js"></script>
-  <script src="./store.js"></script>
-  <script src="./crud-page.js"></script>
+  <script src="./js/poc.js"></script>
+  <script src="./js/store.js"></script>
+  <script src="./js/crud-page.js"></script>
   <script>
     Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
     Poc.renderShell({ activeRoute: "cad-bancos" });
     PocCrudPage.render({
       entityKey: "bancos",
-      title: "Cadastro de Bancos / Instituições Financeiras",
+      title: "Cadastro de Bancos",
       fields: [
         { key: "nome", label: "Nome", required: true, placeholder: "Ex.: BANCO BBC S.A" },
         { key: "codigoExterno", label: "Código Externo", placeholder: "Ex.: BBC / DAYCOVAL / etc." },

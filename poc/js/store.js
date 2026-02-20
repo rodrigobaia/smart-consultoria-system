@@ -34,6 +34,15 @@ const PocStore = (() => {
     return newItem;
   }
 
+  function update(entity, id, data) {
+    const list = load(entity);
+    const idx = list.findIndex((x) => x.id === id);
+    if (idx === -1) return false;
+    list[idx] = { ...list[idx], ...data, updatedAt: new Date().toISOString() };
+    save(entity, list);
+    return true;
+  }
+
   function remove(entity, id) {
     const list = load(entity);
     const next = list.filter((x) => x.id !== id);
@@ -45,7 +54,7 @@ const PocStore = (() => {
     localStorage.removeItem(key(entity));
   }
 
-  return { load, save, add, remove, clear };
+  return { load, save, add, remove, update, clear };
 })();
 
 

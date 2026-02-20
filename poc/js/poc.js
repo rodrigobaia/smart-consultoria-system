@@ -214,7 +214,7 @@
             <a class="nav__item" href="./cad-usuarios.html" data-route="cad-usuarios" data-roles="Administrador,Gestor">Usuários</a>
             <a class="nav__item" href="./cad-colaboradores.html" data-route="cad-colaboradores" data-roles="Administrador,Gestor">Colaboradores</a>
             <a class="nav__item" href="./cad-produtos.html" data-route="cad-produtos" data-roles="Administrador,Gestor">Produtos</a>
-            <a class="nav__item" href="./cad-bancos.html" data-route="cad-bancos" data-roles="Administrador,Gestor">Bancos / IF</a>
+            <a class="nav__item" href="./cad-bancos.html" data-route="cad-bancos" data-roles="Administrador,Gestor">Bancos</a>
           </div>
 
           <div class="nav__section">
@@ -260,12 +260,40 @@
 
     applyRoleToNav(sess);
     setActiveNav(activeRoute);
-    
+
     // Theme initialization
     const initialTheme = getTheme();
     applyTheme(initialTheme);
     updateThemeIcon();
     document.getElementById("btnToggleTheme")?.addEventListener("click", toggleTheme);
+  }
+
+  function showModal({ title, content }) {
+    const id = "pocModal";
+    let modal = document.getElementById(id);
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = id;
+      modal.className = "modalWrap";
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="modalBackdrop"></div>
+      <div class="modalCard">
+        <div class="modalHeader">
+          <h2>${escapeHtml(title)}</h2>
+          <button class="modalClose">&times;</button>
+        </div>
+        <div class="modalContent">${content}</div>
+      </div>
+    `;
+
+    modal.style.display = "flex";
+
+    const close = () => modal.style.display = "none";
+    modal.querySelector(".modalClose").onclick = close;
+    modal.querySelector(".modalBackdrop").onclick = close;
   }
 
   window.Poc = {
@@ -276,6 +304,7 @@
     parsePtBrNumber,
     formatMoneyBR,
     toast,
+    showModal,
     getSession,
     setSession,
     requireAuth,

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>POC — Comissões</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body>
     <div id="app"></div>
@@ -24,8 +24,8 @@
       </section>
     </div>
 
-    <script src="./poc.js"></script>
-    <script src="./comissoes.js"></script>
+    <script src="./js/poc.js"></script>
+    <script src="./js/comissoes.js"></script>
     <script>
       Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
       Poc.renderShell({ activeRoute: "comissoes" });

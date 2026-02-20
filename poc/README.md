@@ -47,4 +47,7 @@ Arquivos compartilhados:
 - Mapeamento completo de todas as colunas dos CSVs (será documentado depois)
 - Fórmulas finais de comissão/cálculos e regras de validação por coluna (será definido depois)
 
+## Documentação Adicional
+- [Diretrizes de UI/UX e Responsividade](./UI_GUIDELINES.md) — Recomendações para a implementação final em Blazor.
+
 

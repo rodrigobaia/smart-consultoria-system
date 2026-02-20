@@ -1,55 +1,50 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>POC — Cadastro de Usuários</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div id="app"></div>
 
-    <div id="content" style="display:none">
-      <section class="view">
-        <div id="crudRoot"></div>
-      </section>
-    </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POC — Cadastro de Usuários</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
 
-    <script src="./poc.js"></script>
-    <script src="./store.js"></script>
-    <script src="./crud-page.js"></script>
-    <script>
-      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
-      Poc.renderShell({ activeRoute: "cad-usuarios" });
-      PocCrudPage.render({
-        entityKey: "usuarios",
-        title: "Cadastro de Usuários",
-        fields: [
-          { key: "username", label: "Usuário", required: true, placeholder: "ex.: rodrigo.baia" },
-          { 
-            key: "perfil", 
-            label: "Perfil (Role)", 
-            required: true, 
-            type: "select",
-            options: ["Administrador", "Gestor", "Consultoria", "Operador"]
-          },
-          { 
-            key: "status", 
-            label: "Status", 
-            required: true, 
-            type: "select",
-            options: ["Ativo", "Inativo", "Bloqueado"]
-          },
-          { 
-            key: "twofa", 
-            label: "2FA", 
-            type: "select",
-            options: ["Sim", "Não"]
-          },
-        ],
-      });
-    </script>
-  </body>
+<body>
+  <div id="app"></div>
+
+  <div id="content" style="display:none">
+    <section class="view">
+      <div id="crudRoot"></div>
+    </section>
+  </div>
+
+  <script src="./js/poc.js"></script>
+  <script src="./js/store.js"></script>
+  <script src="./js/crud-page.js"></script>
+  <script>
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+    Poc.renderShell({ activeRoute: "cad-usuarios" });
+    PocCrudPage.render({
+      entityKey: "usuarios",
+      title: "Cadastro de Usuários",
+      fields: [
+        { key: "username", label: "Usuário", required: true, placeholder: "ex.: rodrigo.baia" },
+        {
+          key: "perfil",
+          label: "Perfil (Role)",
+          required: true,
+          type: "select",
+          options: ["Administrador", "Gestor", "Consultoria", "Operador"]
+        },
+        {
+          key: "status",
+          label: "Status",
+          required: true,
+          type: "select",
+          options: ["Ativo", "Inativo", "Bloqueado"]
+        },
+      ],
+    });
+  </script>
+</body>
+
 </html>
-
-
