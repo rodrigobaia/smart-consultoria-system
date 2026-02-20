@@ -1,60 +1,79 @@
-/* Comissões (POC) — mock de consulta baseado nas propostas importadas */
-
 const PocComissoes = (() => {
-  function render() {
+  const MATRIX_KEY = "poc_commission_matrix";
+
+  function getMatrix() {
+    const raw = localStorage.getItem(MATRIX_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }
+
+  function saveMatrix(data) {
+    localStorage.setItem(MATRIX_KEY, JSON.stringify(data));
+  }
+
+  function renderMatrix() {
     const wrap = document.getElementById("comissoesWrap");
     const empty = document.getElementById("comissoesEmpty");
-    const data = Poc.loadImport();
-    const list = data?.propostas || [];
+    const products = Poc.getProducts();
+    const matrix = getMatrix();
 
-    if (!list.length) {
+    if (products.length === 0) {
       wrap.innerHTML = "";
       empty.style.display = "block";
       return;
     }
     empty.style.display = "none";
 
-    // POC: regra mock 1% do valor financiado
-    const rows = list
-      .slice(0, 120)
-      .map((p) => {
-        const base = p.valorFinanciado ?? 0;
-        const valor = base * 0.01;
-        return `<tr>
-          <td>${Poc.escapeHtml(p.codigoProposta)}</td>
-          <td>${Poc.escapeHtml(p.banco ?? "—")}</td>
-          <td>${Poc.formatMoneyBR(base)}</td>
-          <td>${Poc.formatMoneyBR(valor)}</td>
-        </tr>`;
-      })
-      .join("");
+    const roles = ["Consultor", "Operador", "Smart"];
 
-    wrap.innerHTML = `
-      <div class="badges" style="margin-bottom:10px">
-        <span class="badge">Regra (mock): <strong>1%</strong> do Valor Financiado</span>
-        <span class="badge badge--bad">Atenção: fórmula final ainda não definida</span>
-      </div>
-      <div class="tableWrap">
-        <table>
+    let html = `
+      <div class="matrix-wrap">
+        <table class="matrix-table">
           <thead>
             <tr>
-              <th>Proposta</th>
-              <th>Banco</th>
-              <th>Base</th>
-              <th>Comissão (mock)</th>
+              <th>Perfil / Produto</th>
+              ${products.map(p => `<th>${Poc.escapeHtml(p.nome)}</th>`).join("")}
             </tr>
           </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
+          <tbody>
     `;
+
+    roles.forEach(role => {
+      html += `<tr><td>${role}</td>`;
+      products.forEach(p => {
+        const val = matrix[`${role}_${p.id}`] || "";
+        html += `
+          <td>
+            <input type="text" 
+                   data-role="${role}" 
+                   data-pid="${p.id}" 
+                   value="${val}" 
+                   placeholder="—"
+                   onchange="PocComissoes.handleUpdate(this)" />
+          </td>
+        `;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    wrap.innerHTML = html;
+  }
+
+  function handleUpdate(input) {
+    const role = input.dataset.role;
+    const pid = input.dataset.pid;
+    const val = input.value.trim();
+
+    const matrix = getMatrix();
+    matrix[`${role}_${pid}`] = val;
+    saveMatrix(matrix);
+
+    Poc.toast(`Salvo: ${role} para este produto.`, "ok");
   }
 
   function init() {
-    render();
+    renderMatrix();
   }
 
-  return { init };
+  return { init, handleUpdate };
 })();
-
-

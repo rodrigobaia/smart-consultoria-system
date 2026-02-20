@@ -160,9 +160,9 @@ const PocImportacao = (() => {
     const errHtml = errors.length
       ? `<div class="badges" style="margin-top:8px;"><span class="badge badge--bad">Erros: <strong>${errors.length}</strong></span></div>
          <ul class="bullets">${errors
-           .slice(0, 6)
-           .map((e) => `<li><strong>Linha ${e.line}:</strong> ${Poc.escapeHtml(e.message)}</li>`)
-           .join("")}</ul>`
+        .slice(0, 6)
+        .map((e) => `<li><strong>Linha ${e.line}:</strong> ${Poc.escapeHtml(e.message)}</li>`)
+        .join("")}</ul>`
       : `<div class="badges" style="margin-top:8px;"><span class="badge badge--ok">Sem erros de chave (POC)</span></div>`;
 
     container.innerHTML = `
@@ -185,8 +185,8 @@ const PocImportacao = (() => {
     const pend = data.pending.slice(0, 10);
     const pendHtml = pend.length
       ? `<ul class="bullets">${pend
-          .map((p) => `<li><strong>${Poc.escapeHtml(p.codigoProposta)}</strong> (linha ${p.line}): ${Poc.escapeHtml(p.message)}</li>`)
-          .join("")}</ul>`
+        .map((p) => `<li><strong>${Poc.escapeHtml(p.codigoProposta)}</strong> (linha ${p.line}): ${Poc.escapeHtml(p.message)}</li>`)
+        .join("")}</ul>`
       : `<div class="badges"><span class="badge badge--ok">Nenhuma pendência de cruzamento (POC)</span></div>`;
 
     container.innerHTML = `
@@ -256,10 +256,51 @@ const PocImportacao = (() => {
   }
 
   function init() {
+    const fileVendas = document.getElementById("fileVendas");
+    const fileItens = document.getElementById("fileItens");
+    const dropVendas = document.getElementById("dropVendas");
+    const dropItens = document.getElementById("dropItens");
+    const nameVendas = document.getElementById("nameVendas");
+    const nameItens = document.getElementById("nameItens");
+
+    function setupDropzone(input, drop, nameEl) {
+      input.addEventListener("change", () => {
+        const file = input.files?.[0];
+        if (file) {
+          nameEl.textContent = `Selecionado: ${file.name}`;
+          drop.classList.add("dropzone--active");
+        } else {
+          nameEl.textContent = "";
+          drop.classList.remove("dropzone--active");
+        }
+      });
+
+      ["dragover", "dragenter"].forEach(type => {
+        drop.addEventListener(type, (e) => {
+          e.preventDefault();
+          drop.classList.add("dropzone--dragover");
+        });
+      });
+
+      ["dragleave", "drop", "dragend"].forEach(type => {
+        drop.addEventListener(type, (e) => {
+          e.preventDefault();
+          drop.classList.remove("dropzone--dragover");
+        });
+      });
+    }
+
+    if (fileVendas && dropVendas && nameVendas) setupDropzone(fileVendas, dropVendas, nameVendas);
+    if (fileItens && dropItens && nameItens) setupDropzone(fileItens, dropItens, nameItens);
+
     document.getElementById("btnProcessar").addEventListener("click", processImport);
     document.getElementById("btnLimpar").addEventListener("click", () => {
-      document.getElementById("fileVendas").value = "";
-      document.getElementById("fileItens").value = "";
+      fileVendas.value = "";
+      fileItens.value = "";
+      nameVendas.textContent = "";
+      nameItens.textContent = "";
+      dropVendas.classList.remove("dropzone--active");
+      dropItens.classList.remove("dropzone--active");
       Poc.clearImport();
       clearUi();
       Poc.toast("Importação limpa.", "ok");

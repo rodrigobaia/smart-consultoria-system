@@ -184,50 +184,59 @@
     const content = document.getElementById("content");
     const contentHtml = content ? content.innerHTML : "";
 
+    const userInits = sess ? sess.user.substring(0, 1).toUpperCase() : "?";
+
     app.innerHTML = `
       <div class="app">
         <header class="topbar">
-          <button id="btnToggleNav" class="icon-btn" aria-label="Abrir menu" title="Menu">☰</button>
-          <div class="topbar__title">
-            <div class="brand">Smart Consultoria System</div>
-            <div class="subtitle">POC (HTML/CSS/JS)</div>
+          <div class="topbar__left">
+            <button id="btnToggleNav" class="icon-btn" aria-label="Abrir menu" title="Menu">☰</button>
+            <div class="topbar__title">
+              <div class="brand">Smart Consultoria System</div>
+              <div class="subtitle">POC (HTML/CSS/JS)</div>
+            </div>
           </div>
           <div class="topbar__right">
             <button id="btnToggleTheme" class="icon-btn" aria-label="Alternar tema" title="Alternar tema"></button>
-            <div id="userChip" class="chip ${sess ? "" : "chip--hidden"}">${sess ? escapeHtml(`${sess.user} • ${sess.role}`) : ""}</div>
-            <button id="btnLogout" class="btn btn--ghost ${sess ? "" : "btn--hidden"}">Sair</button>
+            
+            <a href="./configuracao.html" id="btnSettings" class="icon-btn ${sess && (sess.role === 'Administrador' || sess.role === 'Gestor') ? "" : "btn--hidden"}" title="Configurações" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">⚙️</a>
+
+            <div class="user-menu ${sess ? "" : "chip--hidden"}" id="userMenu">
+              <div class="user-trigger" id="userTrigger">
+                <div class="user-trigger__avatar">${userInits}</div>
+                <span class="brand" style="font-size:13px">${escapeHtml(sess?.user || "")}</span>
+                <small>▾</small>
+              </div>
+              <div class="user-dropdown" id="userDropdown">
+                <div class="user-dropdown__header">
+                  <span class="user-dropdown__name">${escapeHtml(sess?.user || "")}</span>
+                  <span class="user-dropdown__role">${escapeHtml(sess?.role || "")}</span>
+                </div>
+                <a href="./perfil.html" class="user-dropdown__link">👤 Meu Perfil</a>
+                <a href="./alterar-senha.html" class="user-dropdown__link">🔑 Alterar Senha</a>
+                <div class="user-dropdown__divider"></div>
+                <a href="#" id="btnLogout" class="user-dropdown__link user-dropdown__link--danger">🚪 Sair</a>
+              </div>
+            </div>
           </div>
         </header>
 
         <aside id="nav" class="nav nav--closed" aria-label="Navegação">
           <div class="nav__section">
             <div class="nav__sectionTitle">Navegação</div>
-            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultoria,Operador">Home</a>
-            <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">Importação</a>
-            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultoria,Operador">Propostas</a>
-            <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultoria,Operador">Comissões (mock)</a>
+            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultoria,Operador">🏠 Home</a>
+            <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
+            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultoria,Operador">📄 Propostas</a>
+            <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultoria,Operador">💰 Comissões</a>
           </div>
 
           <div class="nav__section">
             <div class="nav__sectionTitle">Cadastros</div>
-            <a class="nav__item" href="./cad-lojas.html" data-route="cad-lojas" data-roles="Administrador,Gestor">Lojas</a>
-            <a class="nav__item" href="./cad-usuarios.html" data-route="cad-usuarios" data-roles="Administrador,Gestor">Usuários</a>
-            <a class="nav__item" href="./cad-colaboradores.html" data-route="cad-colaboradores" data-roles="Administrador,Gestor">Colaboradores</a>
-            <a class="nav__item" href="./cad-produtos.html" data-route="cad-produtos" data-roles="Administrador,Gestor">Produtos</a>
-            <a class="nav__item" href="./cad-bancos.html" data-route="cad-bancos" data-roles="Administrador,Gestor">Bancos</a>
-          </div>
-
-          <div class="nav__section">
-            <div class="nav__sectionTitle">Configuração</div>
-            <a class="nav__item" href="./configuracao.html" data-route="configuracao" data-roles="Administrador,Gestor">Configuração</a>
-          </div>
-
-          <div class="nav__section">
-            <div class="nav__sectionTitle">Sessão</div>
-            <div class="nav__info">
-              <div><strong>Usuário:</strong> <span id="navUser">${sess ? escapeHtml(sess.user) : "—"}</span></div>
-              <div><strong>Perfil:</strong> <span id="navRole">${sess ? escapeHtml(sess.role) : "—"}</span></div>
-            </div>
+            <a class="nav__item" href="./cad-lojas.html" data-route="cad-lojas" data-roles="Administrador,Gestor">🏢 Lojas</a>
+            <a class="nav__item" href="./cad-usuarios.html" data-route="cad-usuarios" data-roles="Administrador,Gestor">👥 Usuários</a>
+            <a class="nav__item" href="./cad-colaboradores.html" data-route="cad-colaboradores" data-roles="Administrador,Gestor">🤝 Colaboradores</a>
+            <a class="nav__item" href="./cad-produtos.html" data-route="cad-produtos" data-roles="Administrador,Gestor">📦 Produtos</a>
+            <a class="nav__item" href="./cad-bancos.html" data-route="cad-bancos" data-roles="Administrador,Gestor">🏦 Bancos</a>
           </div>
         </aside>
 
@@ -236,7 +245,7 @@
           <div id="slot">${contentHtml}</div>
           <footer class="footer">
             <div class="muted">
-              POC local (sem backend). Arquivos: <code>poc/*.html</code>, <code>poc/styles.css</code>, <code>poc/poc.js</code>
+              POC local (sem backend). Arquivos: <code>poc/*.html</code>, <code>poc/styles.css</code>, <code>poc/js/*.js</code>
             </div>
           </footer>
         </main>
@@ -246,13 +255,27 @@
     `;
 
     // wire shell
-    const btn = document.getElementById("btnToggleNav");
+    const btnNav = document.getElementById("btnToggleNav");
     const bd = document.getElementById("backdrop");
-    btn?.addEventListener("click", toggleNav);
+    btnNav?.addEventListener("click", toggleNav);
     bd?.addEventListener("click", closeNav);
     document.querySelectorAll(".nav__item").forEach((a) => a.addEventListener("click", () => closeNav()));
 
-    document.getElementById("btnLogout")?.addEventListener("click", () => {
+    // user dropdown logic
+    const userTrigger = document.getElementById("userTrigger");
+    const userDropdown = document.getElementById("userDropdown");
+    if (userTrigger && userDropdown) {
+      userTrigger.onclick = (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle("user-dropdown--open");
+      };
+      document.addEventListener("click", () => {
+        userDropdown.classList.remove("user-dropdown--open");
+      });
+    }
+
+    document.getElementById("btnLogout")?.addEventListener("click", (e) => {
+      e.preventDefault();
       setSession(null);
       clearImport();
       location.href = "./login.html";
@@ -312,6 +335,48 @@
     saveImport,
     loadImport,
     clearImport,
+    getProducts: () => PocStore.load("produtos"),
+    seed: () => {
+      const prods = PocStore.load("produtos");
+      const matrixRaw = localStorage.getItem("poc_commission_matrix");
+
+      // Se não tem produtos OU não tem matriz, vamos forçar o seed
+      if (prods.length === 0 || !matrixRaw || matrixRaw === "{}") {
+        // Limpa para garantir sincronia entre IDs de produtos e chaves da matriz
+        PocStore.clear("produtos");
+
+        const initial = [
+          { nome: "Mensalidade" },
+          { nome: "Cockpit" },
+          { nome: "SPFv" },
+          { nome: "SPRenda" },
+          { nome: "SPRenda Premium" },
+          { nome: "DIA" },
+          { nome: "DIA Premium" },
+          { nome: "Garantia Full" },
+          { nome: "Garantia MC" }
+        ];
+        initial.forEach(p => PocStore.add("produtos", p));
+
+        const p2 = PocStore.load("produtos");
+        const matrix = {};
+        const data = {
+          "Consultor": ["5%", "0,50%", "2%", "2%", "2%", "2%", "2%", "R$ 50,00", "R$ 25,00"],
+          "Operador": ["15%", "2,50%", "3%", "3%", "3%", "3%", "3%", "R$ 100,00", "R$ 25,00"],
+          "Smart": ["80%", "7,00%", "20%", "10%", "10%", "10%", "10%", "R$ 450,00", "R$ 350,00"]
+        };
+
+        const roles = ["Consultor", "Operador", "Smart"];
+        roles.forEach(role => {
+          p2.forEach((prod, i) => {
+            if (data[role] && data[role][i]) {
+              matrix[`${role}_${prod.id}`] = data[role][i];
+            }
+          });
+        });
+        localStorage.setItem("poc_commission_matrix", JSON.stringify(matrix));
+      }
+    }
   };
 })();
 

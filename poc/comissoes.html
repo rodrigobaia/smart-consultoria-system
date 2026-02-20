@@ -1,37 +1,40 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>POC — Comissões</title>
-    <link rel="stylesheet" href="./css/styles.css" />
-  </head>
-  <body>
-    <div id="app"></div>
 
-    <div id="content" style="display:none">
-      <section class="view">
-        <div class="card">
-          <h1>Comissões (mock)</h1>
-          <p class="muted">
-            Apenas para validar o fluxo de consulta. Fórmulas reais serão definidas e documentadas mais à frente.
-          </p>
-          <div id="comissoesWrap"></div>
-          <div id="comissoesEmpty" class="muted" style="margin-top:10px; display:none;">
-            Nenhum dado importado ainda. Vá em <a class="link" href="./importacao.html">Importação</a>.
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POC — Comissões</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <div id="content" style="display:none">
+    <section class="view">
+      <div class="card">
+        <h1>Comissões (mock)</h1>
+        <p class="muted">
+          Apenas para validar o fluxo de consulta. Fórmulas reais serão definidas e documentadas mais à frente.
+        </p>
+        <div id="comissoesWrap"></div>
+        <div id="comissoesEmpty" class="muted" style="margin-top:10px; display:none;">
+          Nenhum dado importado ainda. Vá em <a class="link" href="./importacao.html">Importação</a>.
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
+  </div>
 
-    <script src="./js/poc.js"></script>
-    <script src="./js/comissoes.js"></script>
-    <script>
-      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
-      Poc.renderShell({ activeRoute: "comissoes" });
-      PocComissoes.init();
-    </script>
-  </body>
+  <script src="./js/store.js"></script>
+  <script src="./js/poc.js"></script>
+  <script src="./js/comissoes.js"></script>
+  <script>
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
+    Poc.renderShell({ activeRoute: "comissoes" });
+    Poc.seed();
+    PocComissoes.init();
+  </script>
+</body>
+
 </html>
-
-

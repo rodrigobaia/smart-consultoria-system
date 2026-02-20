@@ -176,19 +176,22 @@ code {
 }
 
 .nav__item {
-  display: block;
-  padding: 8px 12px;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
   color: var(--text);
   text-decoration: none;
   font-size: 14px;
-  margin-bottom: 2px;
+  border-radius: 8px;
   transition: all 0.2s;
+  margin-bottom: 2px;
 }
 
 .nav__item:hover {
-  background: rgba(79, 140, 255, 0.08);
+  background: rgba(79, 140, 255, 0.1);
   color: var(--primary);
+  transform: translateX(4px);
 }
 
 .nav__item--active {
@@ -313,10 +316,16 @@ p {
   background: var(--panel2);
   color: var(--text);
   outline: none;
+  cursor: pointer;
+}
+
+select option {
+  background-color: var(--panel);
+  color: var(--text);
 }
 
 .field input::placeholder {
-  color: rgba(232, 238, 252, 0.45);
+  color: var(--muted);
 }
 
 .field--inline {
@@ -393,6 +402,12 @@ p {
   background: transparent;
   color: var(--text);
   outline: none;
+  cursor: pointer;
+}
+
+.pill__select option {
+  background-color: var(--panel);
+  color: var(--text);
 }
 
 .bullets {
@@ -751,6 +766,171 @@ tr:hover td {
   display: block;
 }
 
+/* User Dropdown Menu */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel2);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.user-trigger:hover {
+  background: var(--panel);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.user-trigger__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  box-shadow: 0 15px 35px var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 300;
+  overflow: hidden;
+}
+
+.user-dropdown--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown__header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.user-dropdown__name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  display: block;
+}
+
+.user-dropdown__role {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.user-dropdown__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.user-dropdown__link:hover {
+  background: rgba(79, 140, 255, 0.1);
+  color: var(--primary);
+}
+
+.user-dropdown__link--danger:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--danger);
+}
+
+.user-dropdown__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* Dynamic List / Association UI */
+/* DropZone Component */
+.dropzone {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--panel2);
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 140px;
+}
+
+.dropzone:hover,
+.dropzone--dragover {
+  border-color: var(--primary);
+  background: rgba(79, 140, 255, 0.05);
+}
+
+.dropzone--active {
+  border-style: solid;
+  border-color: var(--ok);
+  background: rgba(45, 212, 191, 0.05);
+}
+
+.dropzone__icon {
+  font-size: 32px;
+  opacity: 0.7;
+}
+
+.dropzone__text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.dropzone__filename {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .assocList {
   display: grid;
   gap: 8px;
@@ -760,4 +940,75 @@ tr:hover td {
   border: 1px solid var(--border);
   border-radius: var(--radius2);
   background: var(--panel2);
+}
+
+/* Matrix Table Configuration (Spreadsheet Style) */
+.matrix-wrap {
+  overflow-x: auto;
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel2);
+  position: relative;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 800px;
+}
+
+.matrix-table th,
+.matrix-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+  height: 44px;
+  text-align: center;
+}
+
+.matrix-table th {
+  background: rgba(79, 140, 255, 0.05);
+  font-weight: 600;
+  color: var(--muted);
+  padding: 12px 16px;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.matrix-table th:first-child,
+.matrix-table td:first-child {
+  width: 140px;
+  min-width: 140px;
+  background: rgba(79, 140, 255, 0.08);
+  font-weight: bold;
+  color: var(--text);
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding-left: 12px;
+  text-align: left;
+}
+
+.matrix-table input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.matrix-table input:focus {
+  background: rgba(79, 140, 255, 0.1);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.matrix-table td:hover {
+  background: rgba(255, 255, 255, 0.03);
 }

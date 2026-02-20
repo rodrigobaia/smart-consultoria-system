@@ -1,46 +1,48 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>POC — Propostas</title>
-    <link rel="stylesheet" href="./css/styles.css" />
-  </head>
-  <body>
-    <div id="app"></div>
 
-    <div id="content" style="display:none">
-      <section class="view">
-        <div class="card">
-          <div class="row row--between row--wrap">
-            <div>
-              <h1>Propostas</h1>
-              <p class="muted">Resultados normalizados (mock) após cruzamento.</p>
-            </div>
-            <label class="field field--inline">
-              <span>Buscar</span>
-              <input id="propostaSearch" type="search" placeholder="Código, loja, banco..." />
-            </label>
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POC — Propostas</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
 
-          <div id="propostasTableWrap" class="tableWrap"></div>
-          <div id="propostasEmpty" class="muted" style="margin-top:10px; display:none;">
-            Nenhum dado importado ainda. Vá em <a class="link" href="./importacao.html">Importação</a>.
+<body>
+  <div id="app"></div>
+
+  <div id="content" style="display:none">
+    <section class="view">
+      <div class="card">
+        <div class="row row--between row--wrap">
+          <div>
+            <h1>Propostas</h1>
+            <p class="muted">Resultados normalizados (mock) após cruzamento.</p>
           </div>
+          <label class="field field--inline">
+            <span>Buscar</span>
+            <input id="propostaSearch" type="search" placeholder="Código, loja, banco..." />
+          </label>
         </div>
 
-        <div id="propostaDetail" class="card card--hidden"></div>
-      </section>
-    </div>
+        <div id="propostasTableWrap" class="tableWrap"></div>
+        <div id="propostasEmpty" class="muted" style="margin-top:10px; display:none;">
+          Nenhum dado importado ainda. Vá em <a class="link" href="./importacao.html">Importação</a>.
+        </div>
+      </div>
 
-    <script src="./js/poc.js"></script>
-    <script src="./js/propostas.js"></script>
-    <script>
-      Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
-      Poc.renderShell({ activeRoute: "propostas" });
-      PocPropostas.init();
-    </script>
-  </body>
+      <div id="propostaDetail" class="card card--hidden"></div>
+    </section>
+  </div>
+
+  <script src="./js/store.js"></script>
+  <script src="./js/poc.js"></script>
+  <script src="./js/propostas.js"></script>
+  <script>
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
+    Poc.renderShell({ activeRoute: "propostas" });
+    PocPropostas.init();
+  </script>
+</body>
+
 </html>
-
-
