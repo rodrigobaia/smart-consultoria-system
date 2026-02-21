@@ -301,6 +301,10 @@ p {
   grid-template-columns: 1fr;
 }
 
+.grid--3 {
+  grid-template-columns: 1fr;
+}
+
 .row {
   display: flex;
   gap: 12px;
@@ -1123,4 +1127,15 @@ tr:hover td {
   color: var(--text);
   font-weight: 600;
   padding: 4px 8px;
+}
+
+/* Responsive grid breakpoints */
+@media (min-width: 640px) {
+  .grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }

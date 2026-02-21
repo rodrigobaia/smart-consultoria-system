@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>POC — Importação</title>
   <link rel="stylesheet" href="./css/styles.css" />
+  <!-- SheetJS para leitura de arquivos Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -32,7 +34,7 @@
           </div>
         </div>
 
-        <div class="grid grid--2">
+        <div class="grid grid--3">
           <div id="dropVendas" class="dropzone">
             <input id="fileVendas" type="file" accept=".csv,text/csv" />
             <div class="dropzone__icon">📄</div>
@@ -48,6 +50,15 @@
             </div>
             <div id="nameItens" class="dropzone__filename"></div>
           </div>
+
+          <div id="dropTotalseg" class="dropzone">
+            <input id="fileTotalseg" type="file"
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            <div class="dropzone__icon">📊</div>
+            <div class="dropzone__text">Arraste o arquivo <strong>Totalseg.xlsx</strong> aqui ou clique para selecionar
+            </div>
+            <div id="nameTotalseg" class="dropzone__filename"></div>
+          </div>
         </div>
 
         <div class="actions">
@@ -58,9 +69,10 @@
 
       <div id="importSummary" class="card card--hidden"></div>
 
-      <div class="grid grid--2">
+      <div class="grid grid--3">
         <div id="importStagingVendas" class="card card--hidden"></div>
         <div id="importStagingItens" class="card card--hidden"></div>
+        <div id="importStagingTotalseg" class="card card--hidden"></div>
       </div>
 
       <div id="importCross" class="card card--hidden"></div>

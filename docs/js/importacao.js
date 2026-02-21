@@ -1,8 +1,13 @@
-/* Importação (POC) — lê Vendas/Itens no browser, faz staging e cruza por Código da Proposta
- * Persistência: salva resultado em localStorage via Poc.saveImport()
+/* Importação (POC) — lê Vendas/Itens (CSV) e Totalseg (Excel) no browser, faz staging e cruza por
+ * Código da Proposta. Persistência: localStorage via Poc.saveImport() / Poc.mergeImport().
+ * Depende da lib SheetJS (xlsx) para leitura de Excel.
  */
 
 const PocImportacao = (() => {
+  // ---------------------------------------------------------------------------
+  // Utilidades de parse
+  // ---------------------------------------------------------------------------
+
   function parseCsvSemicolon(text) {
     const lines = String(text ?? "")
       .replaceAll("\r\n", "\n")
@@ -18,6 +23,19 @@ const PocImportacao = (() => {
     return { header, rows };
   }
 
+  /** Lê um arquivo Excel (.xlsx/.xls) e retorna { header, rows } no mesmo formato do CSV. */
+  function parseExcel(arrayBuffer) {
+    const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+    const sheetName = wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+    // Converte a planilha para array de arrays (sem cabeçalho separado ainda)
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    if (!data || data.length === 0) return { header: [], rows: [] };
+    const header = data[0].map((h) => String(h ?? "").trim());
+    const rows = data.slice(1).map((row) => row.map((c) => String(c ?? "")));
+    return { header, rows };
+  }
+
   function findColumnIndex(header, candidates) {
     const normHeader = header.map(Poc.normalizeHeader);
     for (const cand of candidates) {
@@ -26,6 +44,10 @@ const PocImportacao = (() => {
     }
     return -1;
   }
+
+  // ---------------------------------------------------------------------------
+  // Leitores de arquivo
+  // ---------------------------------------------------------------------------
 
   async function readFileAsText(file, encoding) {
     if (!file) return "";
@@ -40,6 +62,20 @@ const PocImportacao = (() => {
       }
     });
   }
+
+  async function readFileAsArrayBuffer(file) {
+    if (!file) return null;
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error("Falha ao ler arquivo"));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Staging genérico (CSV)
+  // ---------------------------------------------------------------------------
 
   function buildStagingRows({ header, rows }, kind) {
     const idxCodigo = findColumnIndex(header, ["cod da proposta", "c d da proposta", "codigo da proposta"]);
@@ -61,6 +97,59 @@ const PocImportacao = (() => {
 
     return { staging: result, errors, header };
   }
+
+  // ---------------------------------------------------------------------------
+  // Staging do Totalseg (Excel)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Constrói o staging do Totalseg a partir do Excel parseado.
+   * Extrai campos relevantes: Código da Proposta, Produto, Valor Seguro, etc.
+   */
+  function buildTotalsegStaging({ header, rows }) {
+    const idxCodigo = findColumnIndex(header, [
+      "cod da proposta", "codigo da proposta", "proposta", "num proposta", "numero proposta"
+    ]);
+    const idxProduto = findColumnIndex(header, ["produto", "descricao produto", "tipo produto"]);
+    const idxValor = findColumnIndex(header, ["valor seguro", "valor premio", "premio", "valor"]);
+    const idxStatus = findColumnIndex(header, ["status", "situacao"]);
+    const idxCpf = findColumnIndex(header, ["cpf", "cpf cliente"]);
+    const idxNome = findColumnIndex(header, ["nome", "nome cliente", "segurado"]);
+
+    const result = [];
+    const errors = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const cols = rows[i];
+      // Ignora linhas completamente vazias
+      if (cols.every(c => !String(c ?? "").trim())) continue;
+
+      const codigo = idxCodigo >= 0 ? Poc.safeStr(cols[idxCodigo]) : null;
+      const rowNum = i + 2;
+
+      if (!codigo) {
+        errors.push({ kind: "Totalseg", line: rowNum, message: "Código da Proposta ausente." });
+      }
+
+      result.push({
+        kind: "Totalseg",
+        line: rowNum,
+        codigoProposta: codigo,
+        produto: idxProduto >= 0 ? Poc.safeStr(cols[idxProduto]) : null,
+        valorSeguro: idxValor >= 0 ? Poc.parsePtBrNumber(cols[idxValor]) : null,
+        status: idxStatus >= 0 ? Poc.safeStr(cols[idxStatus]) : null,
+        cpf: idxCpf >= 0 ? Poc.safeStr(cols[idxCpf]) : null,
+        nomeCliente: idxNome >= 0 ? Poc.safeStr(cols[idxNome]) : null,
+        cols,
+      });
+    }
+
+    return { staging: result, errors, header };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Normalização / cruzamento
+  // ---------------------------------------------------------------------------
 
   function normalizeFromVendas(vendasStagingInfo) {
     const { header, staging } = vendasStagingInfo;
@@ -90,6 +179,7 @@ const PocImportacao = (() => {
         vendedorResponsavel: idxVendedor >= 0 ? Poc.safeStr(r.cols[idxVendedor]) : null,
         valorComissao: idxComissao >= 0 ? Poc.safeStr(r.cols[idxComissao]) : "R$ 0,00",
         itens: [],
+        seguros: [],  // dados do Totalseg
       });
     }
     return propostasByCodigo;
@@ -133,16 +223,51 @@ const PocImportacao = (() => {
     return pending;
   }
 
+  /** Cruza registros do Totalseg com as propostas pelo código. */
+  function attachTotalsegToPropostas(totalsegStagingInfo, propostasByCodigo) {
+    const { staging } = totalsegStagingInfo;
+    const pending = [];
+
+    for (const r of staging) {
+      const codigo = r.codigoProposta;
+      if (!codigo) continue;
+
+      const seguro = {
+        codigoProposta: codigo,
+        produto: r.produto,
+        valorSeguro: r.valorSeguro,
+        status: r.status,
+        cpf: r.cpf,
+        nomeCliente: r.nomeCliente,
+        line: r.line,
+      };
+
+      const prop = propostasByCodigo.get(codigo);
+      if (!prop) {
+        pending.push({ kind: "Totalseg", line: r.line, codigoProposta: codigo, message: "Registro Totalseg sem Venda correspondente." });
+        continue;
+      }
+      prop.seguros.push(seguro);
+    }
+    return pending;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Renderização de UI
+  // ---------------------------------------------------------------------------
+
   function renderSummary(data) {
     const el = document.getElementById("importSummary");
     el.classList.remove("card--hidden");
     const errors = data.errors.length;
     const pending = data.pending.length;
+    const totalsegsCount = data.totalsegRaw?.length ?? 0;
     el.innerHTML = `
       <h2 style="margin:0 0 10px 0; font-size:16px;">Resumo do lote (POC)</h2>
       <div class="kpi">
-        <div class="kpiCard"><div class="kpiCard__label">Linhas Vendas (staging)</div><div class="kpiCard__value">${data.vendasRaw.length}</div></div>
-        <div class="kpiCard"><div class="kpiCard__label">Linhas Itens (staging)</div><div class="kpiCard__value">${data.itensRaw.length}</div></div>
+        <div class="kpiCard"><div class="kpiCard__label">Linhas Vendas</div><div class="kpiCard__value">${data.vendasRaw.length}</div></div>
+        <div class="kpiCard"><div class="kpiCard__label">Linhas Itens</div><div class="kpiCard__value">${data.itensRaw.length}</div></div>
+        <div class="kpiCard"><div class="kpiCard__label">Linhas Totalseg</div><div class="kpiCard__value">${totalsegsCount}</div></div>
         <div class="kpiCard"><div class="kpiCard__label">Erros</div><div class="kpiCard__value" style="color:${errors ? "var(--danger)" : "var(--ok)"}">${errors}</div></div>
         <div class="kpiCard"><div class="kpiCard__label">Pendências</div><div class="kpiCard__value" style="color:${pending ? "var(--danger)" : "var(--ok)"}">${pending}</div></div>
       </div>
@@ -182,11 +307,12 @@ const PocImportacao = (() => {
 
   function renderStaging(kind, containerId, stagingInfo) {
     const container = document.querySelector(containerId);
+    if (!container) return;
     container.classList.remove("card--hidden");
 
     const preview = stagingInfo.staging.slice(0, 8);
     const rowsHtml = preview
-      .map((r) => `<tr><td>${r.line}</td><td>${Poc.escapeHtml(r.codigoProposta ?? "—")}</td><td>${Poc.escapeHtml(r.chassi ?? "—")}</td></tr>`)
+      .map((r) => `<tr><td>${r.line}</td><td>${Poc.escapeHtml(r.codigoProposta ?? "—")}</td><td>${Poc.escapeHtml(r.chassi ?? r.produto ?? "—")}</td></tr>`)
       .join("");
 
     const errors = stagingInfo.errors;
@@ -203,7 +329,7 @@ const PocImportacao = (() => {
       <div class="muted">Preview (primeiras ${preview.length} linhas)</div>
       <div class="tableWrap" style="margin-top:10px;">
         <table>
-          <thead><tr><th>Linha</th><th>Código Proposta</th><th>Chassi</th></tr></thead>
+          <thead><tr><th>Linha</th><th>Código Proposta</th><th>Info</th></tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>
@@ -218,15 +344,18 @@ const PocImportacao = (() => {
     const pend = data.pending.slice(0, 10);
     const pendHtml = pend.length
       ? `<ul class="bullets">${pend
-        .map((p) => `<li><strong>${Poc.escapeHtml(p.codigoProposta)}</strong> (linha ${p.line}): ${Poc.escapeHtml(p.message)}</li>`)
+        .map((p) => `<li><strong>${Poc.escapeHtml(p.codigoProposta)}</strong> (${p.kind}, linha ${p.line}): ${Poc.escapeHtml(p.message)}</li>`)
         .join("")}</ul>`
       : `<div class="badges"><span class="badge badge--ok">Nenhuma pendência de cruzamento (POC)</span></div>`;
 
+    const totalsegCruzados = (data.propostas || []).filter(p => p.seguros?.length > 0).length;
+
     container.innerHTML = `
-      <h2 style="margin:0 0 10px 0; font-size:16px;">Cruzamento (Vendas × Itens)</h2>
+      <h2 style="margin:0 0 10px 0; font-size:16px;">Cruzamento (Vendas × Itens × Totalseg)</h2>
       <div class="badges">
         <span class="badge ${data.errors.length ? "badge--bad" : "badge--ok"}">Erros de chave: <strong>${data.errors.length}</strong></span>
-        <span class="badge ${data.pending.length ? "badge--bad" : "badge--ok"}">Itens sem venda: <strong>${data.pending.length}</strong></span>
+        <span class="badge ${data.pending.length ? "badge--bad" : "badge--ok"}">Itens/Seguros sem venda: <strong>${data.pending.length}</strong></span>
+        <span class="badge badge--ok">Propostas com Totalseg: <strong>${totalsegCruzados}</strong></span>
       </div>
       <div style="margin-top:8px" class="muted">Pendências (preview)</div>
       ${pendHtml}
@@ -240,31 +369,39 @@ const PocImportacao = (() => {
     document.getElementById("importSummary").classList.add("card--hidden");
     document.getElementById("importStagingVendas").classList.add("card--hidden");
     document.getElementById("importStagingItens").classList.add("card--hidden");
+    document.getElementById("importStagingTotalseg").classList.add("card--hidden");
     document.getElementById("importCross").classList.add("card--hidden");
     document.getElementById("importFullPreview").classList.add("card--hidden");
   }
+
+  // ---------------------------------------------------------------------------
+  // Fluxo principal
+  // ---------------------------------------------------------------------------
 
   let lastProcessedData = null;
 
   async function processImport() {
     const fV = document.getElementById("fileVendas").files?.[0] || null;
     const fI = document.getElementById("fileItens").files?.[0] || null;
+    const fT = document.getElementById("fileTotalseg").files?.[0] || null;
 
-    if (!fV && !fI) {
-      Poc.toast("Selecione pelo menos um arquivo (Vendas.csv ou Itens.csv).", "bad");
+    if (!fV && !fI && !fT) {
+      Poc.toast("Selecione pelo menos um arquivo (Vendas.csv, Itens.csv ou Totalseg.xlsx).", "bad");
       return;
     }
 
     const encoding = document.getElementById("importEncoding").value || "utf-8";
     try {
-      const [vText, iText] = await Promise.all([
+      const [vText, iText, tBuffer] = await Promise.all([
         fV ? readFileAsText(fV, encoding) : Promise.resolve(null),
-        fI ? readFileAsText(fI, encoding) : Promise.resolve(null)
+        fI ? readFileAsText(fI, encoding) : Promise.resolve(null),
+        fT ? readFileAsArrayBuffer(fT) : Promise.resolve(null),
       ]);
 
       const existing = Poc.loadImport() || {};
       let vendasStagingInfo = existing.vendasInfo || { staging: [], errors: [], header: [] };
       let itensStagingInfo = existing.itensInfo || { staging: [], errors: [], header: [] };
+      let totalsegStagingInfo = existing.totalsegInfo || { staging: [], errors: [], header: [] };
 
       if (fV) {
         const csv = parseCsvSemicolon(vText);
@@ -274,18 +411,33 @@ const PocImportacao = (() => {
         const csv = parseCsvSemicolon(iText);
         itensStagingInfo = buildStagingRows(csv, "Itens");
       }
+      if (fT) {
+        if (typeof XLSX === "undefined") {
+          Poc.toast("Biblioteca Excel não carregada. Verifique a conexão com a internet.", "bad");
+          return;
+        }
+        const parsed = parseExcel(tBuffer);
+        totalsegStagingInfo = buildTotalsegStaging(parsed);
+      }
 
       const propostasByCodigo = normalizeFromVendas(vendasStagingInfo);
-      const pending = attachItensToPropostas(itensStagingInfo, propostasByCodigo);
-      const propostas = [...propostasByCodigo.values()].sort((a, b) => String(a.codigoProposta).localeCompare(String(b.codigoProposta)));
+      const pendingItens = attachItensToPropostas(itensStagingInfo, propostasByCodigo);
+      const pendingTotalseg = attachTotalsegToPropostas(totalsegStagingInfo, propostasByCodigo);
+      const pending = [...pendingItens, ...pendingTotalseg];
+
+      const propostas = [...propostasByCodigo.values()].sort((a, b) =>
+        String(a.codigoProposta).localeCompare(String(b.codigoProposta))
+      );
 
       lastProcessedData = {
         encoding,
         vendasRaw: vendasStagingInfo.staging,
         itensRaw: itensStagingInfo.staging,
+        totalsegRaw: totalsegStagingInfo.staging,
         vendasInfo: vendasStagingInfo,
         itensInfo: itensStagingInfo,
-        errors: [...vendasStagingInfo.errors, ...itensStagingInfo.errors],
+        totalsegInfo: totalsegStagingInfo,
+        errors: [...vendasStagingInfo.errors, ...itensStagingInfo.errors, ...totalsegStagingInfo.errors],
         pending,
         propostas,
       };
@@ -294,18 +446,28 @@ const PocImportacao = (() => {
       document.querySelector(".dropzone").parentElement.style.display = "none";
       document.querySelector(".actions").style.display = "none";
 
-      if (fV) {
-        renderFullPreview("Vendas.csv", vendasStagingInfo, fI ? "Próximo: Itens.csv →" : "Concluir Importação ✔", () => {
-          if (fI) {
-            renderFullPreview("Itens.csv", itensStagingInfo, "Concluir Importação ✔", concluirImportacao);
-          } else {
-            concluirImportacao();
-          }
-        });
-      } else if (fI) {
-        renderFullPreview("Itens.csv", itensStagingInfo, "Concluir Importação ✔", concluirImportacao);
+      // Encadea as pré-visualizações dos arquivos selecionados
+      const previews = [];
+      if (fV) previews.push({ label: "Vendas.csv", info: vendasStagingInfo });
+      if (fI) previews.push({ label: "Itens.csv", info: itensStagingInfo });
+      if (fT) previews.push({ label: "Totalseg.xlsx", info: totalsegStagingInfo });
+
+      function showPreviewChain(idx) {
+        if (idx >= previews.length) {
+          concluirImportacao();
+          return;
+        }
+        const isLast = idx === previews.length - 1;
+        const { label, info } = previews[idx];
+        renderFullPreview(
+          label,
+          info,
+          isLast ? "Concluir Importação ✔" : `Próximo: ${previews[idx + 1].label} →`,
+          () => showPreviewChain(idx + 1)
+        );
       }
 
+      showPreviewChain(0);
       Poc.toast("Arquivo(s) lido(s). Confira os dados antes de concluir.", "ok");
     } catch (e) {
       console.error(e);
@@ -316,8 +478,22 @@ const PocImportacao = (() => {
   function concluirImportacao() {
     if (!lastProcessedData) return;
 
-    // Use merge instead of overwrite
-    Poc.mergeImport(lastProcessedData);
+    // Merge com base existente
+    const old = Poc.loadImport() || {
+      vendasRaw: [], itensRaw: [], totalsegRaw: [],
+      propostas: [], pending: [], errors: []
+    };
+    if (lastProcessedData.vendasRaw?.length) old.vendasRaw = lastProcessedData.vendasRaw;
+    if (lastProcessedData.itensRaw?.length) old.itensRaw = lastProcessedData.itensRaw;
+    if (lastProcessedData.totalsegRaw?.length) old.totalsegRaw = lastProcessedData.totalsegRaw;
+    old.encoding = lastProcessedData.encoding || old.encoding;
+    old.propostas = lastProcessedData.propostas || old.propostas;
+    old.pending = lastProcessedData.pending || old.pending;
+    old.errors = lastProcessedData.errors || old.errors;
+    old.vendasInfo = lastProcessedData.vendasInfo || old.vendasInfo;
+    old.itensInfo = lastProcessedData.itensInfo || old.itensInfo;
+    old.totalsegInfo = lastProcessedData.totalsegInfo || old.totalsegInfo;
+    Poc.saveImport(old);
 
     clearUi();
     document.querySelector(".dropzone").parentElement.style.display = "grid";
@@ -327,19 +503,27 @@ const PocImportacao = (() => {
     renderSummary(finalData);
     renderStaging("Vendas", "#importStagingVendas", finalData.vendasInfo);
     renderStaging("Itens", "#importStagingItens", finalData.itensInfo);
+    renderStaging("Totalseg", "#importStagingTotalseg", finalData.totalsegInfo);
     renderCross(finalData);
 
     Poc.toast("Importação sincronizada com sucesso!", "ok");
     lastProcessedData = null;
   }
 
+  // ---------------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------------
+
   function init() {
     const fileVendas = document.getElementById("fileVendas");
     const fileItens = document.getElementById("fileItens");
+    const fileTotalseg = document.getElementById("fileTotalseg");
     const dropVendas = document.getElementById("dropVendas");
     const dropItens = document.getElementById("dropItens");
+    const dropTotalseg = document.getElementById("dropTotalseg");
     const nameVendas = document.getElementById("nameVendas");
     const nameItens = document.getElementById("nameItens");
+    const nameTotalseg = document.getElementById("nameTotalseg");
 
     function setupDropzone(input, drop, nameEl) {
       input.addEventListener("change", () => {
@@ -366,10 +550,23 @@ const PocImportacao = (() => {
           drop.classList.remove("dropzone--dragover");
         });
       });
+
+      drop.addEventListener("drop", (e) => {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          // Simula seleção via drag-and-drop
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          input.files = dt.files;
+          nameEl.textContent = `Selecionado: ${file.name}`;
+          drop.classList.add("dropzone--active");
+        }
+      });
     }
 
     if (fileVendas && dropVendas && nameVendas) setupDropzone(fileVendas, dropVendas, nameVendas);
     if (fileItens && dropItens && nameItens) setupDropzone(fileItens, dropItens, nameItens);
+    if (fileTotalseg && dropTotalseg && nameTotalseg) setupDropzone(fileTotalseg, dropTotalseg, nameTotalseg);
 
     document.getElementById("btnProcessar").addEventListener("click", processImport);
     document.getElementById("btnVoltarImport").addEventListener("click", () => {
@@ -381,10 +578,13 @@ const PocImportacao = (() => {
     document.getElementById("btnLimpar").addEventListener("click", () => {
       fileVendas.value = "";
       fileItens.value = "";
+      fileTotalseg.value = "";
       nameVendas.textContent = "";
       nameItens.textContent = "";
+      nameTotalseg.textContent = "";
       dropVendas.classList.remove("dropzone--active");
       dropItens.classList.remove("dropzone--active");
+      dropTotalseg.classList.remove("dropzone--active");
       Poc.clearImport();
       clearUi();
       Poc.toast("Importação limpa.", "ok");
@@ -393,5 +593,3 @@ const PocImportacao = (() => {
 
   return { init };
 })();
-
-
