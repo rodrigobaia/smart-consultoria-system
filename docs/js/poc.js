@@ -3,6 +3,8 @@
 (function () {
   const STORAGE_SESSION = "poc_session_v1";
   const STORAGE_IMPORT = "poc_import_v1";
+  const STORAGE_BATCHES = "poc_import_batches_v1";
+  const STORAGE_LAST_BATCH = "poc_import_last_batch_v1";
   const STORAGE_THEME = "poc_theme_v1";
 
   const POC_VERSION = "1.0.0 - Release 2";
@@ -82,6 +84,48 @@
 
   function clearImport() {
     localStorage.removeItem(STORAGE_IMPORT);
+    // Não remove STORAGE_LAST_BATCH para manter o lote atual visível em Propostas/Comissões
+  }
+
+  function loadBatches() {
+    try {
+      const raw = localStorage.getItem(STORAGE_BATCHES);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function getBatch(competenciaKey) {
+    const batches = loadBatches();
+    const b = batches.find((x) => x.competenciaKey === competenciaKey);
+    return b?.data ?? null;
+  }
+
+  function saveImportAsBatch(data, { mes, ano }) {
+    const mesStr = String(mes ?? "").padStart(2, "0");
+    const anoStr = String(ano ?? "").trim();
+    if (!anoStr || !mesStr) return null;
+    const competenciaKey = `${anoStr}-${mesStr}`;
+    const competenciaLabel = `${mesStr}/${anoStr}`;
+    const batches = loadBatches();
+    const processedAt = new Date().toISOString();
+    const existing = batches.findIndex((x) => x.competenciaKey === competenciaKey);
+    const batch = {
+      id: existing >= 0 ? batches[existing].id : "batch_" + Date.now(),
+      mes: parseInt(mesStr, 10),
+      ano: parseInt(anoStr, 10),
+      competenciaKey,
+      competenciaLabel,
+      processedAt,
+      data: data,
+    };
+    if (existing >= 0) batches[existing] = batch;
+    else batches.unshift(batch);
+    localStorage.setItem(STORAGE_BATCHES, JSON.stringify(batches));
+    localStorage.setItem(STORAGE_LAST_BATCH, competenciaKey);
+    return batch;
   }
 
   function saveImport(data) {
@@ -113,8 +157,17 @@
     }
   }
 
+  function getLastBatchKey() {
+    return localStorage.getItem(STORAGE_LAST_BATCH);
+  }
+
   function loadImport() {
     try {
+      const lastKey = localStorage.getItem(STORAGE_LAST_BATCH);
+      if (lastKey) {
+        const batchData = getBatch(lastKey);
+        if (batchData) return batchData;
+      }
       const raw = localStorage.getItem(STORAGE_IMPORT);
       return raw ? JSON.parse(raw) : null;
     } catch {
@@ -217,7 +270,6 @@
       "home": ["🏠 Home"],
       "importacao": ["🏠 Home", "💰 Financeiro", "Importação"],
       "propostas": ["🏠 Home", "💰 Financeiro", "Propostas"],
-      "comissoes": ["🏠 Home", "💰 Financeiro", "Comissões"],
       "relatorio-comissao": ["🏠 Home", "📊 Relatórios", "💰 Comissões"],
       "cad-lojas": ["🏠 Home", "🏢 Cadastros", "Lojas"],
       "cad-usuarios": ["🏠 Home", "👥 Cadastros", "Usuários"],
@@ -283,25 +335,24 @@
         <aside id="nav" class="nav nav--closed" aria-label="Navegação">
           <div class="nav__section">
             <div class="nav__sectionTitle">Navegação</div>
-            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultor,Operador">🏠 Home</a>
+            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultor,Operador,Auxiliar">🏠 Home</a>
           </div>
 
           <div class="nav__section">
             <div class="nav__sectionTitle">Financeiro</div>
             <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
-            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador">📄 Propostas</a>
+            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador,Auxiliar">📄 Propostas</a>
             <a class="nav__item" href="./credenciamento.html" data-route="credenciamento" data-roles="Administrador,Gestor">💳 Credenciamento</a>
-            <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultor,Operador">💰 Comissões</a>
           </div>
 
           <div class="nav__section">
             <div class="nav__sectionTitle">Relatórios</div>
-            <a class="nav__item" href="./relatorio-comissao.html" data-route="relatorio-comissao" data-roles="Administrador,Gestor,Consultor,Operador">📊 Comissões</a>
+            <a class="nav__item" href="./relatorio-comissao.html" data-route="relatorio-comissao" data-roles="Administrador,Gestor,Consultor,Operador,Auxiliar">📊 Comissões</a>
           </div>
 
           <div class="nav__section">
             <div class="nav__sectionTitle">Cadastros</div>
-            <a class="nav__item" href="./cad-lojas.html" data-route="cad-lojas" data-roles="Administrador,Gestor">🏢 Lojas</a>
+            <a class="nav__item" href="./cad-lojas.html" data-route="cad-lojas" data-roles="Administrador,Gestor,Consultor,Operador,Auxiliar">🏢 Lojas</a>
             <a class="nav__item" href="./cad-usuarios.html" data-route="cad-usuarios" data-roles="Administrador,Gestor">👥 Usuários</a>
             <a class="nav__item" href="./cad-colaboradores.html" data-route="cad-colaboradores" data-roles="Administrador,Gestor">🤝 Colaboradores</a>
             <a class="nav__item" href="./cad-produtos.html" data-route="cad-produtos" data-roles="Administrador,Gestor">📦 Produtos</a>
@@ -407,8 +458,12 @@
     requireAuth,
     renderShell,
     saveImport,
+    saveImportAsBatch,
     mergeImport,
     loadImport,
+    loadBatches,
+    getBatch,
+    getLastBatchKey,
     clearImport,
     getProducts: () => PocStore.load("produtos"),
     seed: () => {

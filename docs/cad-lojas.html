@@ -28,11 +28,15 @@
   <script src="./js/store.js"></script>
   <script src="./js/crud-page.js"></script>
   <script>
-    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Auxiliar", "Operador", "Consultor"] });
     Poc.renderShell({ activeRoute: "cad-lojas" });
 
     const allProds = PocStore.load("produtos");
     const allColabs = PocStore.load("colaboradores");
+
+    // Aba Comissões oculta para Auxiliar, Operador e Consultor
+    const sess = Poc.getSession();
+    const hideComissoesTab = sess && ["Auxiliar", "Operador", "Consultor"].includes(sess.role);
 
     // Filtra colaboradores por perfil
     const operadores = allColabs.filter(c => {
@@ -43,17 +47,24 @@
       const u = PocStore.load("usuarios").find(usr => usr.username === c.usuario);
       return u && u.perfil === "Consultor";
     });
+    const auxiliares = allColabs.filter(c => {
+      const u = PocStore.load("usuarios").find(usr => usr.username === c.usuario);
+      return u && u.perfil === "Auxiliar";
+    });
+
+    const baseTabs = [
+      { key: "dados", label: "Dados da Loja" },
+      { key: "socios", label: "Dados do Sócio" },
+      { key: "operadores", label: "Operadores" },
+      { key: "consultores", label: "Consultores" },
+      { key: "auxiliares", label: "Auxiliares" },
+    ];
+    const tabs = hideComissoesTab ? baseTabs : [...baseTabs, { key: "comissoes", label: "Comissões" }];
 
     PocCrudPage.render({
       entityKey: "lojas",
       title: "Cadastro de Lojas",
-      tabs: [
-        { key: "dados", label: "Dados da Loja" },
-        { key: "socios", label: "Dados do Sócio" },
-        { key: "operadores", label: "Operadores" },
-        { key: "consultores", label: "Consultores" },
-        { key: "comissoes", label: "Comissões" },
-      ],
+      tabs,
       fields: [
         // ABA: Dados
         { tab: "dados", key: "razaoSocial", label: "Razão Social", required: true, placeholder: "Razão Social completa" },
@@ -160,10 +171,13 @@
         // --- ABA: ASSOCIAÇÕES ---
         const opHost = document.getElementById("customTabContent_operadores");
         const conHost = document.getElementById("customTabContent_consultores");
+        const auxHost = document.getElementById("customTabContent_auxiliares");
         let itemOperadores = itemToEdit?.operadores || [];
         let itemConsultores = itemToEdit?.consultores || [];
+        let itemAuxiliares = itemToEdit?.auxiliares || [];
 
         function renderAssoc(host, list, currentIds, type) {
+          if (!host) return;
           host.innerHTML = `
             <div class="assocList" style="margin-top:10px;">
               ${list.map(c => {
@@ -185,38 +199,56 @@
 
         renderAssoc(opHost, operadores, itemOperadores, "Operador");
         renderAssoc(conHost, consultores, itemConsultores, "Consultor");
+        renderAssoc(auxHost, auxiliares, itemAuxiliares, "Auxiliar");
 
-        // --- ABA: COMISSÕES (PRODUTOS) ---
+        // --- ABA: COMISSÕES (PRODUTOS) — percentual por perfil (Gestor, Auxiliar, Operador, Consultor); oculta para Auxiliar, Operador e Consultor ---
         const finHost = document.getElementById("customTabContent_comissoes");
-        let finData = itemToEdit?.configFinanceira || {};
+        if (finHost) {
+        const finData = itemToEdit?.configFinanceira || {};
+        const PERFIS = [
+          { key: "gestor", label: "Gestor" },
+          { key: "auxiliar", label: "Auxiliar" },
+          { key: "operador", label: "Operador" },
+          { key: "consultor", label: "Consultor" },
+        ];
 
         finHost.innerHTML = `
-          <h2 style="margin-top:24px; font-size:1rem;">Comissões por Produto</h2>
-          <div class="grid" style="gap:10px; margin-top:10px;">
+          <h2 style="margin-top:24px; font-size:1rem;">Comissões por Produto — Percentual por perfil</h2>
+          <p class="muted" style="margin-top:4px;">Defina o percentual que cada perfil receberá para o produto nesta loja.</p>
+          <div class="grid" style="gap:12px; margin-top:16px;">
             ${allProds.map(p => {
-          const val = finData[p.id] || "";
-          const label = p.tipoComissao === "Percentual" ? "Percentual" : "Valor";
-          const mark = p.tipoComissao === "Percentual" ? "%" : "R$";
+          const raw = finData[p.id];
+          const vals = typeof raw === "object" && raw !== null
+            ? { gestor: raw.gestor ?? "", auxiliar: raw.auxiliar ?? "", operador: raw.operador ?? "", consultor: raw.consultor ?? "" }
+            : { gestor: "", auxiliar: "", operador: "", consultor: "" };
+          const valorProduto = p.valor != null && p.valor !== "" ? Number(p.valor) : 0;
+          const tipoPercentual = (p.tipoComissao || "").toLowerCase().indexOf("percentual") >= 0;
+          const valorExibicao = tipoPercentual
+            ? (valorProduto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%")
+            : ("R$ " + valorProduto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
           return `
-                <div class="card" style="padding:12px; margin:0; background:var(--bg); border-left:4px solid var(--primary);">
-                  <div class="row row--between">
-                    <div>
-                      <strong>${Poc.escapeHtml(p.descricao)}</strong><br/>
-                      <small class="muted">${Poc.escapeHtml(p.codigo)}</small>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span>${label}:</span>
-                      <div style="display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--panel);">
-                        ${mark === 'R$' ? `<span style="padding:0 8px; background:var(--panel2); border-right:1px solid var(--border); display:flex; align-items:center; font-size:12px;">R$</span>` : ''}
-                        <input type="text" 
-                               data-prod-id="${p.id}" 
-                               class="prod-comm"
-                               value="${Poc.escapeHtml(val)}" 
-                               style="width:80px; border:none; padding:6px; outline:none;" 
-                               placeholder="0,00" />
-                        ${mark === '%' ? `<span style="padding:0 8px; background:var(--panel2); border-left:1px solid var(--border); display:flex; align-items:center; font-size:12px;">%</span>` : ''}
-                      </div>
-                    </div>
+                <div class="card" style="padding:14px; margin:0; background:var(--bg); border-left:4px solid var(--primary);">
+                  <div style="margin-bottom:10px;">
+                    <strong>${Poc.escapeHtml(p.descricao || p.nome || "Produto")}</strong>
+                    <br/><small class="muted">${Poc.escapeHtml(p.codigo || p.id)}</small>
+                    <br/><span class="muted" style="font-size:12px;">Valor cadastrado no produto: <strong style="color:var(--text);">${Poc.escapeHtml(valorExibicao)}</strong></span>
+                  </div>
+                  <div class="grid grid--2" style="gap:10px;">
+                    ${PERFIS.map(perf => `
+                      <label class="field" style="margin:0;">
+                        <span style="font-size:12px;">${Poc.escapeHtml(perf.label)} (%)</span>
+                        <div style="display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--panel);">
+                          <input type="text"
+                                 data-prod-id="${p.id}"
+                                 data-perfil="${perf.key}"
+                                 class="prod-comm-perfil"
+                                 value="${Poc.escapeHtml(vals[perf.key])}"
+                                 style="width:70px; border:none; padding:6px; outline:none;"
+                                 placeholder="0,00" />
+                          <span style="padding:0 8px; background:var(--panel2); border-left:1px solid var(--border); display:flex; align-items:center; font-size:12px;">%</span>
+                        </div>
+                      </label>
+                    `).join("")}
                   </div>
                 </div>
               `;
@@ -224,31 +256,59 @@
           </div>
         `;
 
-        document.querySelectorAll(".prod-comm").forEach(inp => {
+        document.querySelectorAll(".prod-comm-perfil").forEach(inp => {
           inp.oninput = (e) => e.target.value = maskMoeda(e.target.value);
         });
+        }
 
         // --- EXPOR DADOS PARA O SAVE ---
         window._getCustomLojasData = () => {
           const ops = Array.from(document.querySelectorAll('input[data-assoc-type="Operador"]:checked')).map(i => i.getAttribute("data-assoc-id"));
           const cons = Array.from(document.querySelectorAll('input[data-assoc-type="Consultor"]:checked')).map(i => i.getAttribute("data-assoc-id"));
+          const aux = Array.from(document.querySelectorAll('input[data-assoc-type="Auxiliar"]:checked')).map(i => i.getAttribute("data-assoc-id"));
           const comms = {};
-          document.querySelectorAll(".prod-comm").forEach(inp => {
-            comms[inp.getAttribute("data-prod-id")] = inp.value;
+          document.querySelectorAll(".prod-comm-perfil").forEach(inp => {
+            const prodId = inp.getAttribute("data-prod-id");
+            const perfil = inp.getAttribute("data-perfil");
+            if (!prodId || !perfil) return;
+            if (!comms[prodId]) comms[prodId] = { gestor: "", auxiliar: "", operador: "", consultor: "" };
+            comms[prodId][perfil] = inp.value;
           });
 
           return {
             socios: sociosData,
             operadores: ops,
             consultores: cons,
+            auxiliares: aux,
             configFinanceira: comms
           };
         };
       },
       onSave: (data, done) => {
         const custom = window._getCustomLojasData();
-        const finalData = { ...data, ...custom };
+        const comms = custom.configFinanceira || {};
 
+        // Validação: por produto, soma dos percentuais por perfil não pode ultrapassar 100% (valor monetário) nem o percentual do produto (tipo percentual)
+        for (const p of allProds) {
+          const cfg = comms[p.id];
+          if (!cfg) continue;
+          const soma = ["gestor", "auxiliar", "operador", "consultor"].reduce((acc, k) => {
+            const v = (cfg[k] ?? "").toString().trim();
+            return acc + (Poc.parsePtBrNumber(v) || 0);
+          }, 0);
+          const tipoPercentual = (p.tipoComissao || "").toLowerCase().indexOf("percentual") >= 0;
+          const valorProduto = p.valor != null && p.valor !== "" ? Number(p.valor) : 0;
+          const limite = tipoPercentual ? valorProduto : 100;
+          if (soma > limite) {
+            const msg = tipoPercentual
+              ? `No produto "${p.descricao || p.codigo || p.id}" a soma dos percentuais por perfil (${soma.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%) não pode ultrapassar o percentual do produto (${valorProduto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%).`
+              : `No produto "${p.descricao || p.codigo || p.id}" a soma dos percentuais por perfil (${soma.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%) não pode ultrapassar 100%.`;
+            Poc.toast(msg, "bad");
+            return;
+          }
+        }
+
+        const finalData = { ...data, ...custom };
         if (data.id) {
           PocStore.update("lojas", data.id, finalData);
         } else {

@@ -26,6 +26,10 @@ const PocCrudPage = (() => {
     const { entityKey, title, fields } = config;
     const allData = PocStore.load(entityKey);
 
+    // Controle de acesso: Auxiliar, Consultor e Operador são somente leitura
+    const sess = Poc.getSession();
+    const readOnly = sess && (sess.role === 'Auxiliar' || sess.role === 'Consultor' || sess.role === 'Operador');
+
     // Filtra campos visíveis na lista (remove seções, infos e hiddenInList)
     const visibleFields = fields.filter(f => f.key && f.type !== 'section' && f.type !== 'info' && !f.hiddenInList);
 
@@ -61,10 +65,10 @@ const PocCrudPage = (() => {
         return `
           <tr>
             ${cols}
-            <td style="white-space:nowrap; text-align:right;">
+            ${!readOnly ? `<td style="white-space:nowrap; text-align:right;">
               <button class="btn btn--ghost" data-edit="${Poc.escapeHtml(item.id)}">Editar</button>
               <button class="btn btn--ghost" data-del="${Poc.escapeHtml(item.id)}">Excluir</button>
-            </td>
+            </td>` : ''}
           </tr>
         `;
       })
@@ -77,14 +81,14 @@ const PocCrudPage = (() => {
             <h1>${Poc.escapeHtml(title)}</h1>
             <p class="muted">Lista de registros com filtro e busca.</p>
           </div>
-          <button id="btnNovo" class="btn btn--primary">＋ Novo Registro</button>
+          ${!readOnly && !config.hideAddBtn ? `<button id="btnNovo" class="btn btn--primary">＋ ${Poc.escapeHtml(config.addButtonLabel || "Novo Registro")}</button>` : ''}
         </div>
 
         <div class="row row--wrap" style="gap: 10px; margin-bottom: 20px;">
           <div class="field field--inline" style="flex: 1;">
             <input id="txtFilter" type="text" placeholder="Filtrar registros..." value="${Poc.escapeHtml(state.filter)}" autocomplete="off" />
           </div>
-          <button id="btnClearData" class="btn btn--ghost">Limpar Base</button>
+          ${!readOnly ? '<button id="btnClearData" class="btn btn--ghost">Limpar Base</button>' : ''}
         </div>
 
         <div class="tableWrap">
@@ -92,7 +96,7 @@ const PocCrudPage = (() => {
             <thead>
               <tr>
                 ${visibleFields.map((f) => `<th>${Poc.escapeHtml(f.label)}</th>`).join("")}
-                <th style="text-align:right;">Ações</th>
+                ${!readOnly ? '<th style="text-align:right;">Ações</th>' : ''}
               </tr>
             </thead>
             <tbody>
@@ -117,11 +121,14 @@ const PocCrudPage = (() => {
     `;
 
     // Events
-    document.getElementById("btnNovo").onclick = () => {
-      state.view = "form";
-      state.editId = null;
-      render(config);
-    };
+    if (!readOnly && !config.hideAddBtn) {
+      const btnNovo = document.getElementById("btnNovo");
+      if (btnNovo) btnNovo.onclick = () => {
+        state.view = "form";
+        state.editId = null;
+        render(config);
+      };
+    }
 
     const txtFilter = document.getElementById("txtFilter");
     if (txtFilter) {
@@ -133,13 +140,16 @@ const PocCrudPage = (() => {
       };
     }
 
-    document.getElementById("btnClearData").onclick = () => {
-      if (!confirm("Limpar todos os registros deste cadastro?")) return;
-      PocStore.clear(entityKey);
-      Poc.toast("Cadastro limpo.", "ok");
-      state.currentPage = 1;
-      render(config);
-    };
+    const btnClearData = document.getElementById("btnClearData");
+    if (btnClearData) {
+      btnClearData.onclick = () => {
+        if (!confirm("Limpar todos os registros deste cadastro?")) return;
+        PocStore.clear(entityKey);
+        Poc.toast("Cadastro limpo.", "ok");
+        state.currentPage = 1;
+        render(config);
+      };
+    }
 
     if (document.getElementById("btnPrevPage")) {
       document.getElementById("btnPrevPage").onclick = () => {

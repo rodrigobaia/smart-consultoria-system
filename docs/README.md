@@ -19,7 +19,6 @@ Cada item do menu possui um HTML próprio:
 - `poc/home.html`
 - `poc/importacao.html`
 - `poc/propostas.html`
-- `poc/comissoes.html`
 - Cadastros:
   - `poc/cad-lojas.html`
   - `poc/cad-usuarios.html`
@@ -34,7 +33,7 @@ Arquivos compartilhados:
 - `poc/poc.js` (layout, sessão, helpers)
 - `poc/store.js` (persistência local para CRUD mock)
 - `poc/crud-page.js` (render genérico de CRUD)
-- `poc/importacao.js` / `poc/propostas.js` / `poc/comissoes.js` (lógica de cada tela)
+- `poc/importacao.js` / `poc/propostas.js` (lógica de cada tela)
 
 ## O que a POC valida
 - Login e **menus por perfil** (simulado)

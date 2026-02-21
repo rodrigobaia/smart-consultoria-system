@@ -41,6 +41,48 @@
           </div>
         </div>
 
+        <div class="card" style="margin-bottom: 1rem;">
+          <h2 style="margin:0 0 8px 0; font-size:1rem;">Competência (mês/ano) do lote</h2>
+          <p class="muted" style="margin:0 0 10px 0;">Obrigatório. Define o lote de importação; reimportar para a mesma competência substitui o lote.</p>
+          <div class="row" style="gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+            <label class="field" style="min-width: 100px;">
+              <span>Mês</span>
+              <select id="importMes" title="Mês da competência">
+                <option value="">—</option>
+                <option value="01">01 - Janeiro</option>
+                <option value="02">02 - Fevereiro</option>
+                <option value="03">03 - Março</option>
+                <option value="04">04 - Abril</option>
+                <option value="05">05 - Maio</option>
+                <option value="06">06 - Junho</option>
+                <option value="07">07 - Julho</option>
+                <option value="08">08 - Agosto</option>
+                <option value="09">09 - Setembro</option>
+                <option value="10">10 - Outubro</option>
+                <option value="11">11 - Novembro</option>
+                <option value="12">12 - Dezembro</option>
+              </select>
+            </label>
+            <label class="field" style="min-width: 100px;">
+              <span>Ano</span>
+              <select id="importAno" title="Ano da competência">
+                <option value="">—</option>
+              </select>
+            </label>
+            <label class="field" style="min-width: 120px;">
+              <span>Percentual ILA no mês (%)</span>
+              <input id="importPercentualIla" type="text" inputmode="decimal" placeholder="Ex.: 2,5 ou 2.5" title="Usado como base de cálculo em algumas regras" />
+            </label>
+            <label class="field" style="min-width: 200px;">
+              <span>Reimportar lote existente (opcional)</span>
+              <select id="importLoteExistente" title="Selecione para sobrescrever um lote já importado">
+                <option value="">Novo lote (usar mês/ano acima)</option>
+              </select>
+            </label>
+          </div>
+          <p class="muted" style="margin: 10px 0 0 0; font-size: 0.875rem;">O percentual ILA é obrigatório e será utilizado como base de cálculo em regras de comissão.</p>
+        </div>
+
         <div class="grid grid--3">
           <div id="dropVendas" class="dropzone">
             <input id="fileVendas" type="file" accept=".csv,text/csv" />

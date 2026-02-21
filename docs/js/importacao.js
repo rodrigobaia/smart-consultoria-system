@@ -262,8 +262,19 @@ const PocImportacao = (() => {
     const errors = data.errors.length;
     const pending = data.pending.length;
     const totalsegsCount = data.totalsegRaw?.length ?? 0;
+    const lastKey = Poc.getLastBatchKey();
+    const batches = Poc.loadBatches();
+    const batch = lastKey ? batches.find((b) => b.competenciaKey === lastKey) : null;
+    const competenciaBadge = batch
+      ? `<span class="badge badge--ok">Competência do lote: <strong>${Poc.escapeHtml(batch.competenciaLabel)}</strong></span>`
+      : "";
+    const ila = data.percentualIla;
+    const ilaBadge = (ila !== undefined && ila !== null && ila !== "")
+      ? `<span class="badge badge--ok">ILA do mês: <strong>${typeof ila === "number" ? ila.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : Poc.escapeHtml(String(ila))}%</strong></span>`
+      : "";
     el.innerHTML = `
       <h2 style="margin:0 0 10px 0; font-size:16px;">Resumo do lote (POC)</h2>
+      <div class="badges" style="margin-bottom:10px;">${competenciaBadge}${ilaBadge}</div>
       <div class="kpi">
         <div class="kpiCard"><div class="kpiCard__label">Linhas Vendas</div><div class="kpiCard__value">${data.vendasRaw.length}</div></div>
         <div class="kpiCard"><div class="kpiCard__label">Linhas Itens</div><div class="kpiCard__value">${data.itensRaw.length}</div></div>
@@ -380,7 +391,72 @@ const PocImportacao = (() => {
 
   let lastProcessedData = null;
 
+  function getCompetenciaFromForm() {
+    const mes = document.getElementById("importMes")?.value?.trim() || "";
+    const ano = document.getElementById("importAno")?.value?.trim() || "";
+    return { mes, ano };
+  }
+
+  function setCompetenciaForm(mes, ano) {
+    const elMes = document.getElementById("importMes");
+    const elAno = document.getElementById("importAno");
+    if (elMes) elMes.value = mes ? String(mes).padStart(2, "0") : "";
+    if (elAno) elAno.value = ano ? String(ano) : "";
+  }
+
+  function getPercentualIlaFromForm() {
+    const el = document.getElementById("importPercentualIla");
+    const raw = (el?.value ?? "").trim();
+    if (raw === "") return null;
+    const num = Poc.parsePtBrNumber(raw);
+    return num !== null && Number.isFinite(num) ? num : null;
+  }
+
+  function setPercentualIlaForm(value) {
+    const el = document.getElementById("importPercentualIla");
+    if (!el) return;
+    if (value === null || value === undefined) el.value = "";
+    else el.value = typeof value === "number" ? String(value).replace(".", ",") : String(value);
+  }
+
+  function updateLoteExistenteDropdown() {
+    const sel = document.getElementById("importLoteExistente");
+    if (!sel) return;
+    const batches = Poc.loadBatches();
+    sel.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "Novo lote (usar mês/ano acima)";
+    sel.appendChild(opt0);
+    batches.forEach((b) => {
+      const o = document.createElement("option");
+      o.value = b.competenciaKey;
+      o.textContent = `${b.competenciaLabel} (${(b.data?.propostas?.length ?? 0)} propostas)`;
+      sel.appendChild(o);
+    });
+  }
+
   async function processImport() {
+    const { mes, ano } = getCompetenciaFromForm();
+    if (!mes || !ano) {
+      Poc.toast("Informe a competência (mês e ano) do lote de importação.", "bad");
+      return;
+    }
+
+    const percentualIla = getPercentualIlaFromForm();
+    if (percentualIla === null) {
+      Poc.toast("Informe o percentual ILA no mês (%). Ex.: 2,5 ou 2.5", "bad");
+      return;
+    }
+    if (percentualIla < 0) {
+      Poc.toast("O percentual ILA deve ser maior ou igual a zero.", "bad");
+      return;
+    }
+    if (percentualIla > 100) {
+      Poc.toast("O percentual ILA não pode ser maior que 100%.", "bad");
+      return;
+    }
+
     const fV = document.getElementById("fileVendas").files?.[0] || null;
     const fI = document.getElementById("fileItens").files?.[0] || null;
     const fT = document.getElementById("fileTotalseg").files?.[0] || null;
@@ -430,6 +506,9 @@ const PocImportacao = (() => {
       );
 
       lastProcessedData = {
+        mes,
+        ano,
+        percentualIla,
         encoding,
         vendasRaw: vendasStagingInfo.staging,
         itensRaw: itensStagingInfo.staging,
@@ -478,35 +557,41 @@ const PocImportacao = (() => {
   function concluirImportacao() {
     if (!lastProcessedData) return;
 
-    // Merge com base existente
-    const old = Poc.loadImport() || {
-      vendasRaw: [], itensRaw: [], totalsegRaw: [],
-      propostas: [], pending: [], errors: []
+    const { mes, ano } = lastProcessedData;
+    if (!mes || !ano) {
+      Poc.toast("Competência (mês/ano) não informada. Reinicie o processo e selecione mês e ano.", "bad");
+      return;
+    }
+
+    // Salva como lote da competência (sobrescreve se já existir)
+    const dataToSave = {
+      encoding: lastProcessedData.encoding,
+      percentualIla: lastProcessedData.percentualIla,
+      vendasRaw: lastProcessedData.vendasRaw,
+      itensRaw: lastProcessedData.itensRaw,
+      totalsegRaw: lastProcessedData.totalsegRaw,
+      vendasInfo: lastProcessedData.vendasInfo,
+      itensInfo: lastProcessedData.itensInfo,
+      totalsegInfo: lastProcessedData.totalsegInfo,
+      errors: lastProcessedData.errors,
+      pending: lastProcessedData.pending,
+      propostas: lastProcessedData.propostas,
     };
-    if (lastProcessedData.vendasRaw?.length) old.vendasRaw = lastProcessedData.vendasRaw;
-    if (lastProcessedData.itensRaw?.length) old.itensRaw = lastProcessedData.itensRaw;
-    if (lastProcessedData.totalsegRaw?.length) old.totalsegRaw = lastProcessedData.totalsegRaw;
-    old.encoding = lastProcessedData.encoding || old.encoding;
-    old.propostas = lastProcessedData.propostas || old.propostas;
-    old.pending = lastProcessedData.pending || old.pending;
-    old.errors = lastProcessedData.errors || old.errors;
-    old.vendasInfo = lastProcessedData.vendasInfo || old.vendasInfo;
-    old.itensInfo = lastProcessedData.itensInfo || old.itensInfo;
-    old.totalsegInfo = lastProcessedData.totalsegInfo || old.totalsegInfo;
-    Poc.saveImport(old);
+    Poc.saveImportAsBatch(dataToSave, { mes, ano });
 
     clearUi();
     document.querySelector(".dropzone").parentElement.style.display = "grid";
     document.querySelector(".actions").style.display = "flex";
 
     const finalData = Poc.loadImport();
+    updateLoteExistenteDropdown();
     renderSummary(finalData);
     renderStaging("Vendas", "#importStagingVendas", finalData.vendasInfo);
     renderStaging("Itens", "#importStagingItens", finalData.itensInfo);
     renderStaging("Totalseg", "#importStagingTotalseg", finalData.totalsegInfo);
     renderCross(finalData);
 
-    Poc.toast("Importação sincronizada com sucesso!", "ok");
+    Poc.toast("Lote de importação salvo para " + (String(mes).padStart(2, "0") + "/" + ano) + ".", "ok");
     lastProcessedData = null;
   }
 
@@ -515,6 +600,36 @@ const PocImportacao = (() => {
   // ---------------------------------------------------------------------------
 
   function init() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const anoSelect = document.getElementById("importAno");
+    if (anoSelect) {
+      anoSelect.innerHTML = "<option value=\"\">—</option>";
+      for (let y = currentYear + 1; y >= currentYear - 5; y--) {
+        const o = document.createElement("option");
+        o.value = String(y);
+        o.textContent = String(y);
+        if (y === currentYear) o.selected = true;
+        anoSelect.appendChild(o);
+      }
+    }
+
+    updateLoteExistenteDropdown();
+    document.getElementById("importLoteExistente")?.addEventListener("change", function () {
+      const key = this.value;
+      if (!key) {
+        setPercentualIlaForm("");
+        return;
+      }
+      const batches = Poc.loadBatches();
+      const b = batches.find((x) => x.competenciaKey === key);
+      if (b) {
+        setCompetenciaForm(b.mes, b.ano);
+        const ila = b.data?.percentualIla;
+        setPercentualIlaForm(ila !== undefined && ila !== null ? ila : "");
+      }
+    });
+
     const fileVendas = document.getElementById("fileVendas");
     const fileItens = document.getElementById("fileItens");
     const fileTotalseg = document.getElementById("fileTotalseg");
@@ -585,9 +700,8 @@ const PocImportacao = (() => {
       dropVendas.classList.remove("dropzone--active");
       dropItens.classList.remove("dropzone--active");
       dropTotalseg.classList.remove("dropzone--active");
-      Poc.clearImport();
       clearUi();
-      Poc.toast("Importação limpa.", "ok");
+      Poc.toast("Arquivos e pré-visualização limpos. Os lotes já salvos permanecem.", "ok");
     });
   }
 
