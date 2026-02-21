@@ -1,0 +1,30 @@
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using SpertaComissao.Web.Components.Layout
+@using SpertaComissao.Web.Components.Pages
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="SpertaComissao.Web.styles.css" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+<body>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Não encontrado</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Página não encontrada.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

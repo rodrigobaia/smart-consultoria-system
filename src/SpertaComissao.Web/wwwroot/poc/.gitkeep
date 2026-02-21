@@ -1,0 +1,2 @@
+# A POC (docs/) é copiada para wwwroot/poc no build Docker.
+# Para testar localmente, copie o conteúdo de docs/ para esta pasta ou acesse /blazor.

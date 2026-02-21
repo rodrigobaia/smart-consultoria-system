@@ -1,0 +1,36 @@
+# SpertaComissao - prova de conceito
+# Executa a aplicação e serve a POC em /poc/.
+# Na raiz do repo: docker compose -f src/docker-compose.yml up --build
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    ports:
+      - "5080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=SpertaComissao;User=root;Password=sperta_dev;
+    # Descomente para depender do MySQL (Etapa 3+)
+    # depends_on:
+    #   - mysql
+
+  # MySQL (opcional - descomente para Identity/EF nas próximas etapas)
+  # mysql:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: sperta_dev
+  #     MYSQL_DATABASE: SpertaComissao
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+
+# volumes:
+#   mysql_data:

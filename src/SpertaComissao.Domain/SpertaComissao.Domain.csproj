@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SpertaComissao.Domain</RootNamespace>
+    <AssemblyName>SpertaComissao.Domain</AssemblyName>
+    <Description>Núcleo do negócio - entidades, value objects, enums e contratos de repositório (DDD). Sem dependências externas.</Description>
+  </PropertyGroup>
+
+</Project>

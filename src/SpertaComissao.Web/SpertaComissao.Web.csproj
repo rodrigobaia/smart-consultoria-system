@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SpertaComissao.Web</RootNamespace>
+    <AssemblyName>SpertaComissao.Web</AssemblyName>
+    <Description>Apresentação: Blazor Server, serve POC estática em /poc.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SpertaComissao.Application\SpertaComissao.Application.csproj" />
+    <ProjectReference Include="..\SpertaComissao.Infrastructure\SpertaComissao.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
