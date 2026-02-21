@@ -510,34 +510,50 @@ tr:hover td {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
   border-top: 1px solid var(--border);
 }
 
 .pagination__info {
   font-size: 13px;
   color: var(--muted);
+  background: var(--panel2);
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
 }
 
 .pagination__btn {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--border);
-  background: var(--panel2);
-  border-radius: 8px;
+  background: var(--panel);
+  border-radius: 12px;
   color: var(--text);
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 13px;
 }
 
 .pagination__btn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .pagination__btn:not(:disabled):hover {
-  background: var(--panel);
+  background: var(--primary);
+  color: #ffffff;
   border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(81, 43, 212, 0.25);
 }
 
 .link {
@@ -1072,4 +1088,39 @@ tr:hover td {
 
 .matrix-table td:hover {
   background: rgba(255, 255, 255, 0.03);
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb__item {
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.2s;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.breadcrumb__item:hover {
+  color: var(--primary);
+  background: rgba(79, 140, 255, 0.1);
+}
+
+.breadcrumb__separator {
+  color: var(--border);
+  font-size: 12px;
+  user-select: none;
+}
+
+.breadcrumb__current {
+  color: var(--text);
+  font-weight: 600;
+  padding: 4px 8px;
 }

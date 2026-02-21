@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POC — Credenciamento Financeiro</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <div id="content" style="display:none">
+        <section class="view">
+            <div id="crudRoot"></div>
+        </section>
+    </div>
+
+    <script src="./js/poc.js"></script>
+    <script src="./js/store.js"></script>
+    <script src="./js/crud-page.js"></script>
+    <script>
+        Poc.requireAuth({ allowRoles: ["Administrador", "Gestor"] });
+        Poc.renderShell({ activeRoute: "credenciamento" });
+
+        // Gera lista de dias (1 a 31)
+        const diasVencimento = Array.from({ length: 31 }, (_, i) => String(i + 1));
+
+        PocCrudPage.render({
+            entityKey: "lojas", // Reutiliza a entidade lojas, apenas editando campos financeiros
+            title: "Credenciamento de Lojas",
+            // Listagem customizada para mostrar dados financeiros
+            columns: [
+                { key: "nomeFantasia", label: "Loja" },
+                { key: "cnpj", label: "CNPJ" },
+                {
+                    key: "mensalidade",
+                    label: "Mensalidade",
+                    render: (val) => Poc.formatMoneyBR(val)
+                },
+                {
+                    key: "diaVencimento",
+                    label: "Vencimento",
+                    render: (val) => val ? `Dia ${val}` : "—"
+                },
+                {
+                    key: "dataReajuste",
+                    label: "Próximo Reajuste",
+                    render: (val) => val ? new Date(val).toLocaleDateString("pt-BR") : "—"
+                },
+            ],
+            fields: [
+                { key: "nomeFantasia", label: "Loja", disabled: true }, // Apenas leitura nesta tela
+                { key: "cnpj", label: "CNPJ", disabled: true },
+                {
+                    key: "mensalidade",
+                    label: "Valor da Mensalidade",
+                    required: true,
+                    placeholder: "0,00",
+                    prefix: "R$"
+                },
+                {
+                    key: "diaVencimento",
+                    label: "Dia de Vencimento",
+                    type: "select",
+                    options: diasVencimento,
+                    required: true
+                },
+                {
+                    key: "dataReajuste",
+                    label: "Data da Próxima Negociação",
+                    type: "text", // Alterado para text para evitar conflito com date picker nativo
+                    required: true
+                },
+            ],
+            onAfterRenderForm: (root, editId) => {
+                const inputMensal = document.getElementById("f_mensalidade");
+                const maskMoeda = (val) => {
+                    let v = val.replace(/\D/g, '');
+                    if (v === "") return "";
+                    let n = parseInt(v, 10) / 100;
+                    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+
+                if (inputMensal) {
+                    inputMensal.oninput = (e) => e.target.value = maskMoeda(e.target.value);
+                    if (inputMensal.value) inputMensal.value = maskMoeda(inputMensal.value.replace('.', ''));
+                }
+
+                // Inicializa Flatpickr
+                flatpickr("#f_dataReajuste", {
+                    locale: "pt",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    allowInput: true
+                });
+            },
+            onSave: (data, done) => {
+                // Normaliza moeda antes de salvar
+                if (data.mensalidade && typeof data.mensalidade === "string") {
+                    data.mensalidade = parseFloat(data.mensalidade.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                }
+
+                // Atualiza apenas os campos permitidos nesta tela
+                const original = PocStore.load("lojas").find(x => x.id === data.id);
+                if (original) {
+                    const updated = { ...original, ...data, updatedAt: new Date().toISOString() };
+                    PocStore.save("lojas", PocStore.load("lojas").map(x => x.id === data.id ? updated : x));
+                    Poc.toast("Credenciamento atualizado!", "ok");
+                }
+                done();
+            },
+            // Remove botões que não fazem sentido nesta tela de gestão financeira
+            hideAddBtn: true,
+            hideDeleteBtn: true
+        });
+    </script>
+</body>
+
+</html>

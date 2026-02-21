@@ -213,6 +213,37 @@
 
     const userInits = sess ? sess.user.substring(0, 1).toUpperCase() : "?";
 
+    const routeMap = {
+      "home": ["🏠 Home"],
+      "importacao": ["🏠 Home", "📥 Importação"],
+      "propostas": ["🏠 Home", "📄 Propostas"],
+      "comissoes": ["🏠 Home", "💰 Financeiro", "Comissões"],
+      "relatorio-comissao": ["🏠 Home", "📊 Relatórios", "💰 Comissões"],
+      "cad-lojas": ["🏠 Home", "🏢 Cadastros", "Lojas"],
+      "cad-usuarios": ["🏠 Home", "👥 Cadastros", "Usuários"],
+      "cad-colaboradores": ["🏠 Home", "🤝 Cadastros", "Colaboradores"],
+      "cad-produtos": ["🏠 Home", "📦 Cadastros", "Produtos"],
+      "cad-bancos": ["🏠 Home", "🏦 Cadastros", "Bancos"],
+      "credenciamento": ["🏠 Home", "💰 Financeiro", "Credenciamento"],
+      "configuracao": ["🏠 Home", "⚙️ Configurações"],
+      "perfil": ["🏠 Home", "👤 Perfil"],
+      "alterar-senha": ["🏠 Home", "🔑 Alterar Senha"]
+    };
+
+    const breadcrumbItems = routeMap[activeRoute] || ["🏠 Home"];
+    const breadcrumbHtml = `
+      <nav class="breadcrumb" aria-label="Trilha de navegação">
+        ${breadcrumbItems.map((item, idx) => {
+      const isLast = idx === breadcrumbItems.length - 1;
+      if (isLast) return `<span class="breadcrumb__current">${item}</span>`;
+      return `
+            <a href="./home.html" class="breadcrumb__item">${item}</a>
+            <span class="breadcrumb__separator">/</span>
+          `;
+    }).join("")}
+      </nav>
+    `;
+
     app.innerHTML = `
       <div class="app">
         <header class="topbar">
@@ -255,6 +286,11 @@
             <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultor,Operador">🏠 Home</a>
             <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
             <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador">📄 Propostas</a>
+          </div>
+
+          <div class="nav__section">
+            <div class="nav__sectionTitle">Financeiro</div>
+            <a class="nav__item" href="./credenciamento.html" data-route="credenciamento" data-roles="Administrador,Gestor">💳 Credenciamento</a>
             <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultor,Operador">💰 Comissões</a>
           </div>
 
@@ -279,6 +315,7 @@
 
         <main class="main">
           <div id="toast" class="toast toast--hidden" role="status" aria-live="polite"></div>
+          ${breadcrumbHtml}
           <div id="slot">${contentHtml}</div>
           <footer class="footer">
             <div class="muted">

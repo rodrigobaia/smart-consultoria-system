@@ -45,7 +45,7 @@
         { key: "socios", label: "Dados do Sócio" },
         { key: "operadores", label: "Operadores" },
         { key: "consultores", label: "Consultores" },
-        { key: "financeiro", label: "Financeiro" },
+        { key: "comissoes", label: "Comissões" },
       ],
       fields: [
         // ABA: Dados
@@ -56,9 +56,6 @@
         { tab: "dados", key: "telefone", label: "Telefone", required: true, placeholder: "(00) 00000-0000" },
         { tab: "dados", key: "chavePix", label: "Chave PIX", placeholder: "CNPJ, E-mail, Celular ou Aleatória" },
         { tab: "dados", key: "status", label: "Status", type: "select", options: ["Ativo", "Inativo"] },
-
-        // ABA: Financeiro (campos base)
-        { tab: "financeiro", key: "mensalidade", label: "Valor da Mensalidade", type: "text", placeholder: "0,00", prefix: "R$" },
       ],
       onAfterRenderForm: (root, editId) => {
         const itemToEdit = editId ? PocStore.load("lojas").find(x => x.id === editId) : null;
@@ -66,7 +63,6 @@
         // --- MÁSCARAS ---
         const inputCnpj = document.getElementById("f_cnpj");
         const inputTel = document.getElementById("f_telefone");
-        const inputMensal = document.getElementById("f_mensalidade");
 
         const maskCnpj = (v) => {
           v = v.replace(/\D/g, "").substring(0, 14);
@@ -94,10 +90,6 @@
 
         if (inputCnpj) inputCnpj.oninput = (e) => e.target.value = maskCnpj(e.target.value);
         if (inputTel) inputTel.oninput = (e) => e.target.value = maskTel(e.target.value);
-        if (inputMensal) {
-          inputMensal.oninput = (e) => e.target.value = maskMoeda(e.target.value);
-          if (inputMensal.value) inputMensal.value = maskMoeda(inputMensal.value.replace('.', ''));
-        }
 
         // --- ABA: SÓCIOS (DINÂMICO) ---
         const sociosHost = document.getElementById("customTabContent_socios");
@@ -187,8 +179,8 @@
         renderAssoc(opHost, operadores, itemOperadores, "Operador");
         renderAssoc(conHost, consultores, itemConsultores, "Consultor");
 
-        // --- ABA: FINANCEIRO (PRODUTOS) ---
-        const finHost = document.getElementById("customTabContent_financeiro");
+        // --- ABA: COMISSÕES (PRODUTOS) ---
+        const finHost = document.getElementById("customTabContent_comissoes");
         let finData = itemToEdit?.configFinanceira || {};
 
         finHost.innerHTML = `
@@ -249,11 +241,6 @@
       onSave: (data, done) => {
         const custom = window._getCustomLojasData();
         const finalData = { ...data, ...custom };
-
-        // Normaliza moeda
-        if (finalData.mensalidade) {
-          finalData.mensalidade = parseFloat(finalData.mensalidade.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-        }
 
         if (data.id) {
           PocStore.update("lojas", data.id, finalData);

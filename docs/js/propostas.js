@@ -1,31 +1,52 @@
-/* Propostas (POC) — renderiza dados normalizados vindos do localStorage (pós-importação) */
-
 const PocPropostas = (() => {
-  function renderPropostas(data) {
+  let state = {
+    data: [],
+    pageSize: 15,
+    currentPage: 1,
+    search: ""
+  };
+
+  function renderPropostas() {
     const wrap = document.getElementById("propostasTableWrap");
     const empty = document.getElementById("propostasEmpty");
     const detail = document.getElementById("propostaDetail");
+    const pagination = document.getElementById("paginationContainer");
 
-    const search = (document.getElementById("propostaSearch").value || "").trim().toLowerCase();
-    const list = data?.propostas || [];
+    const list = state.data || [];
 
     if (!list.length) {
       wrap.innerHTML = "";
       detail.classList.add("card--hidden");
       empty.style.display = "block";
+      pagination.style.display = "none";
       return;
     }
     empty.style.display = "none";
 
-    const filtered = !search
+    const filtered = !state.search
       ? list
       : list.filter((p) => {
-          const hay = `${p.codigoProposta} ${p.loja ?? ""} ${p.cnpjLoja ?? ""} ${p.banco ?? ""} ${p.status ?? ""}`.toLowerCase();
-          return hay.includes(search);
-        });
+        const hay = `${p.codigoProposta} ${p.loja ?? ""} ${p.cnpjLoja ?? ""} ${p.banco ?? ""} ${p.status ?? ""}`.toLowerCase();
+        return hay.includes(state.search);
+      });
 
-    const rows = filtered
-      .slice(0, 400)
+    if (filtered.length === 0) {
+      wrap.innerHTML = `<p class="muted" style="text-align:center; padding:20px;">Nenhum resultado para "${state.search}".</p>`;
+      pagination.style.display = "none";
+      return;
+    }
+
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / state.pageSize);
+    if (state.currentPage > totalPages) state.currentPage = totalPages;
+    if (state.currentPage < 1) state.currentPage = 1;
+
+    const startIdx = (state.currentPage - 1) * state.pageSize;
+    const paginated = filtered.slice(startIdx, startIdx + state.pageSize);
+
+    pagination.style.display = totalPages > 1 ? "flex" : "none";
+
+    const rows = paginated
       .map((p) => {
         return `<tr>
           <td><a class="link" data-codigo="${Poc.escapeHtml(p.codigoProposta)}">${Poc.escapeHtml(p.codigoProposta)}</a></td>
@@ -53,21 +74,26 @@ const PocPropostas = (() => {
               <th>Itens</th>
             </tr>
           </thead>
-          <tbody>${rows || `<tr><td colspan="7" class="muted">Nenhum resultado.</td></tr>`}</tbody>
+          <tbody>${rows}</tbody>
         </table>
       </div>
-      <div class="muted" style="margin-top:8px;">
-        Mostrando ${Math.min(filtered.length, 400)} de ${filtered.length} propostas (POC).
+      <div class="muted" style="margin-top:8px; font-size:12px;">
+        Mostrando ${paginated.length} de ${filtered.length} propostas.
       </div>
     `;
 
+    document.getElementById("currentPage").textContent = state.currentPage;
+    document.getElementById("totalPages").textContent = totalPages;
+    document.getElementById("btnPrevPage").disabled = state.currentPage === 1;
+    document.getElementById("btnNextPage").disabled = state.currentPage === totalPages;
+
     wrap.querySelectorAll("a.link[data-codigo]").forEach((a) => {
-      a.addEventListener("click", () => showDetail(data, a.getAttribute("data-codigo")));
+      a.addEventListener("click", () => showDetail(a.getAttribute("data-codigo")));
     });
   }
 
-  function showDetail(data, codigo) {
-    const p = (data?.propostas || []).find((x) => x.codigoProposta === codigo);
+  function showDetail(codigo) {
+    const p = (state.data || []).find((x) => x.codigoProposta === codigo);
     if (!p) return;
     const el = document.getElementById("propostaDetail");
     el.classList.remove("card--hidden");
@@ -132,9 +158,32 @@ const PocPropostas = (() => {
   }
 
   function init() {
-    const data = Poc.loadImport();
-    document.getElementById("propostaSearch").addEventListener("input", () => renderPropostas(Poc.loadImport()));
-    renderPropostas(data);
+    const importData = Poc.loadImport();
+    state.data = importData?.propostas || [];
+
+    document.getElementById("propostaSearch").addEventListener("input", (e) => {
+      state.search = e.target.value.toLowerCase();
+      state.currentPage = 1;
+      renderPropostas();
+    });
+
+    document.getElementById("btnPrevPage").onclick = () => {
+      if (state.currentPage > 1) {
+        state.currentPage--;
+        renderPropostas();
+      }
+    };
+
+    document.getElementById("btnNextPage").onclick = () => {
+      const filtered = !state.search ? state.data : state.data.filter(p => `${p.codigoProposta} ${p.loja ?? ""} ${p.cnpjLoja ?? ""} ${p.banco ?? ""} ${p.status ?? ""}`.toLowerCase().includes(state.search));
+      const totalPages = Math.ceil(filtered.length / state.pageSize);
+      if (state.currentPage < totalPages) {
+        state.currentPage++;
+        renderPropostas();
+      }
+    };
+
+    renderPropostas();
   }
 
   return { init };
