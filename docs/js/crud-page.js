@@ -7,6 +7,8 @@ const PocCrudPage = (() => {
     view: "list", // 'list' or 'form'
     filter: "",
     editId: null,
+    pageSize: 10,
+    currentPage: 1,
   };
 
   function render(config) {
@@ -35,7 +37,16 @@ const PocCrudPage = (() => {
       );
     });
 
-    const rowsHtml = filtered
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / state.pageSize);
+    if (state.currentPage > totalPages && totalPages > 0) state.currentPage = totalPages;
+    if (state.currentPage < 1) state.currentPage = 1;
+
+    const startIdx = (state.currentPage - 1) * state.pageSize;
+    const endIdx = startIdx + state.pageSize;
+    const paginated = filtered.slice(startIdx, endIdx);
+
+    const rowsHtml = paginated
       .map((item) => {
         const cols = visibleFields
           .map((f) => {
@@ -89,8 +100,18 @@ const PocCrudPage = (() => {
             </tbody>
           </table>
         </div>
-        <div class="muted" style="margin-top: 15px; font-size: 13px;">
-          Total: <strong>${allData.length}</strong> registros ${state.filter ? `(Filtrado: <strong>${filtered.length}</strong>)` : ""}
+        <div class="row row--between" style="margin-top: 15px;">
+          <div class="muted" style="font-size: 13px;">
+            Total: <strong>${allData.length}</strong> registros ${state.filter ? `(Filtrado: <strong>${filtered.length}</strong>)` : ""}
+          </div>
+          
+          ${totalPages > 1 ? `
+            <div class="pagination">
+              <button class="pagination__btn" id="btnPrevPage" ${state.currentPage === 1 ? 'disabled' : ''}>← Anterior</button>
+              <div class="pagination__info">Página <strong>${state.currentPage}</strong> de <strong>${totalPages}</strong></div>
+              <button class="pagination__btn" id="btnNextPage" ${state.currentPage === totalPages ? 'disabled' : ''}>Próxima →</button>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -106,6 +127,7 @@ const PocCrudPage = (() => {
     if (txtFilter) {
       txtFilter.oninput = (e) => {
         state.filter = e.target.value;
+        state.currentPage = 1;
         render(config);
         document.getElementById("txtFilter").focus();
       };
@@ -115,8 +137,27 @@ const PocCrudPage = (() => {
       if (!confirm("Limpar todos os registros deste cadastro?")) return;
       PocStore.clear(entityKey);
       Poc.toast("Cadastro limpo.", "ok");
+      state.currentPage = 1;
       render(config);
     };
+
+    if (document.getElementById("btnPrevPage")) {
+      document.getElementById("btnPrevPage").onclick = () => {
+        if (state.currentPage > 1) {
+          state.currentPage--;
+          render(config);
+        }
+      };
+    }
+
+    if (document.getElementById("btnNextPage")) {
+      document.getElementById("btnNextPage").onclick = () => {
+        if (state.currentPage < totalPages) {
+          state.currentPage++;
+          render(config);
+        }
+      };
+    }
 
     root.querySelectorAll("button[data-edit]").forEach((btn) => {
       btn.onclick = () => {

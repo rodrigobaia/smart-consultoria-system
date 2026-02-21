@@ -65,11 +65,14 @@ const PocImportacao = (() => {
   function normalizeFromVendas(vendasStagingInfo) {
     const { header, staging } = vendasStagingInfo;
     const idxCodigo = findColumnIndex(header, ["cod da proposta", "codigo da proposta"]);
-    const idxLoja = findColumnIndex(header, ["loja"]);
+    const idxLoja = findColumnIndex(header, ["loja", "nome fantasia"]);
     const idxCnpjLoja = findColumnIndex(header, ["cnpj loja", "cnpj"]);
     const idxBanco = findColumnIndex(header, ["banco"]);
-    const idxValorFin = findColumnIndex(header, ["valor financiado"]);
-    const idxStatus = findColumnIndex(header, ["situacao"]);
+    const idxValorFin = findColumnIndex(header, ["valor financiado", "valor bruto"]);
+    const idxStatus = findColumnIndex(header, ["situacao", "status"]);
+    const idxData = findColumnIndex(header, ["data", "data da proposta"]);
+    const idxVendedor = findColumnIndex(header, ["vendedor", "colaborador", "consultor"]);
+    const idxComissao = findColumnIndex(header, ["valor comissao", "comissao"]);
 
     const propostasByCodigo = new Map();
     for (const r of staging) {
@@ -81,8 +84,11 @@ const PocImportacao = (() => {
         loja: idxLoja >= 0 ? Poc.safeStr(r.cols[idxLoja]) : null,
         cnpjLoja: idxCnpjLoja >= 0 ? Poc.safeStr(r.cols[idxCnpjLoja]) : null,
         banco: idxBanco >= 0 ? Poc.safeStr(r.cols[idxBanco]) : null,
-        valorFinanciado: idxValorFin >= 0 ? Poc.parsePtBrNumber(r.cols[idxValorFin]) : null,
+        valorFinanciado: idxValorFin >= 0 ? Poc.safeStr(r.cols[idxValorFin]) : null,
         status: idxStatus >= 0 ? Poc.safeStr(r.cols[idxStatus]) : null,
+        data: idxData >= 0 ? Poc.safeStr(r.cols[idxData]) : null,
+        vendedorResponsavel: idxVendedor >= 0 ? Poc.safeStr(r.cols[idxVendedor]) : null,
+        valorComissao: idxComissao >= 0 ? Poc.safeStr(r.cols[idxComissao]) : "R$ 0,00",
         itens: [],
       });
     }
@@ -147,6 +153,33 @@ const PocImportacao = (() => {
     `;
   }
 
+  function renderFullPreview(kind, stagingInfo, nextLabel, nextAction) {
+    const container = document.getElementById("importFullPreview");
+    const tableContainer = document.getElementById("previewTableContainer");
+    const title = document.getElementById("previewTitle");
+    const btnNext = document.getElementById("btnConcluirImport");
+
+    container.classList.remove("card--hidden");
+    title.textContent = `Pré-visualização: ${kind}`;
+    btnNext.textContent = nextLabel;
+    btnNext.onclick = nextAction;
+
+    const headerHtml = stagingInfo.header.map(h => `<th>${Poc.escapeHtml(h)}</th>`).join("");
+    const rowsHtml = stagingInfo.staging.map(r => {
+      const colsHtml = r.cols.map(c => `<td>${Poc.escapeHtml(c || "")}</td>`).join("");
+      return `<tr>${colsHtml}</tr>`;
+    }).join("");
+
+    tableContainer.innerHTML = `
+      <table class="table--striped">
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    `;
+
+    tableContainer.scrollTop = 0;
+  }
+
   function renderStaging(kind, containerId, stagingInfo) {
     const container = document.querySelector(containerId);
     container.classList.remove("card--hidden");
@@ -208,51 +241,96 @@ const PocImportacao = (() => {
     document.getElementById("importStagingVendas").classList.add("card--hidden");
     document.getElementById("importStagingItens").classList.add("card--hidden");
     document.getElementById("importCross").classList.add("card--hidden");
+    document.getElementById("importFullPreview").classList.add("card--hidden");
   }
+
+  let lastProcessedData = null;
 
   async function processImport() {
     const fV = document.getElementById("fileVendas").files?.[0] || null;
     const fI = document.getElementById("fileItens").files?.[0] || null;
-    if (!fV || !fI) {
-      Poc.toast("Selecione os dois arquivos (Vendas.csv e Itens.csv).", "bad");
+
+    if (!fV && !fI) {
+      Poc.toast("Selecione pelo menos um arquivo (Vendas.csv ou Itens.csv).", "bad");
       return;
     }
 
-    clearUi();
     const encoding = document.getElementById("importEncoding").value || "utf-8";
     try {
-      const [vText, iText] = await Promise.all([readFileAsText(fV, encoding), readFileAsText(fI, encoding)]);
-      const vendasCsv = parseCsvSemicolon(vText);
-      const itensCsv = parseCsvSemicolon(iText);
+      const [vText, iText] = await Promise.all([
+        fV ? readFileAsText(fV, encoding) : Promise.resolve(null),
+        fI ? readFileAsText(fI, encoding) : Promise.resolve(null)
+      ]);
 
-      const vendasStagingInfo = buildStagingRows(vendasCsv, "Vendas");
-      const itensStagingInfo = buildStagingRows(itensCsv, "Itens");
+      const existing = Poc.loadImport() || {};
+      let vendasStagingInfo = existing.vendasInfo || { staging: [], errors: [], header: [] };
+      let itensStagingInfo = existing.itensInfo || { staging: [], errors: [], header: [] };
+
+      if (fV) {
+        const csv = parseCsvSemicolon(vText);
+        vendasStagingInfo = buildStagingRows(csv, "Vendas");
+      }
+      if (fI) {
+        const csv = parseCsvSemicolon(iText);
+        itensStagingInfo = buildStagingRows(csv, "Itens");
+      }
 
       const propostasByCodigo = normalizeFromVendas(vendasStagingInfo);
       const pending = attachItensToPropostas(itensStagingInfo, propostasByCodigo);
       const propostas = [...propostasByCodigo.values()].sort((a, b) => String(a.codigoProposta).localeCompare(String(b.codigoProposta)));
 
-      const data = {
+      lastProcessedData = {
         encoding,
         vendasRaw: vendasStagingInfo.staging,
         itensRaw: itensStagingInfo.staging,
+        vendasInfo: vendasStagingInfo,
+        itensInfo: itensStagingInfo,
         errors: [...vendasStagingInfo.errors, ...itensStagingInfo.errors],
         pending,
         propostas,
       };
 
-      Poc.saveImport(data);
+      clearUi();
+      document.querySelector(".dropzone").parentElement.style.display = "none";
+      document.querySelector(".actions").style.display = "none";
 
-      renderSummary(data);
-      renderStaging("Vendas", "#importStagingVendas", vendasStagingInfo);
-      renderStaging("Itens", "#importStagingItens", itensStagingInfo);
-      renderCross(data);
+      if (fV) {
+        renderFullPreview("Vendas.csv", vendasStagingInfo, fI ? "Próximo: Itens.csv →" : "Concluir Importação ✔", () => {
+          if (fI) {
+            renderFullPreview("Itens.csv", itensStagingInfo, "Concluir Importação ✔", concluirImportacao);
+          } else {
+            concluirImportacao();
+          }
+        });
+      } else if (fI) {
+        renderFullPreview("Itens.csv", itensStagingInfo, "Concluir Importação ✔", concluirImportacao);
+      }
 
-      Poc.toast("Importação processada e salva (POC).", "ok");
+      Poc.toast("Arquivo(s) lido(s). Confira os dados antes de concluir.", "ok");
     } catch (e) {
       console.error(e);
       Poc.toast(`Falha ao processar: ${e?.message || e}`, "bad");
     }
+  }
+
+  function concluirImportacao() {
+    if (!lastProcessedData) return;
+
+    // Use merge instead of overwrite
+    Poc.mergeImport(lastProcessedData);
+
+    clearUi();
+    document.querySelector(".dropzone").parentElement.style.display = "grid";
+    document.querySelector(".actions").style.display = "flex";
+
+    const finalData = Poc.loadImport();
+    renderSummary(finalData);
+    renderStaging("Vendas", "#importStagingVendas", finalData.vendasInfo);
+    renderStaging("Itens", "#importStagingItens", finalData.itensInfo);
+    renderCross(finalData);
+
+    Poc.toast("Importação sincronizada com sucesso!", "ok");
+    lastProcessedData = null;
   }
 
   function init() {
@@ -294,6 +372,12 @@ const PocImportacao = (() => {
     if (fileItens && dropItens && nameItens) setupDropzone(fileItens, dropItens, nameItens);
 
     document.getElementById("btnProcessar").addEventListener("click", processImport);
+    document.getElementById("btnVoltarImport").addEventListener("click", () => {
+      clearUi();
+      document.querySelector(".dropzone").parentElement.style.display = "grid";
+      document.querySelector(".actions").style.display = "flex";
+      lastProcessedData = null;
+    });
     document.getElementById("btnLimpar").addEventListener("click", () => {
       fileVendas.value = "";
       fileItens.value = "";

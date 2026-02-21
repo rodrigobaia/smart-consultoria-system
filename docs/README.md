@@ -49,5 +49,6 @@ Arquivos compartilhados:
 
 ## Documentação Adicional
 - [Diretrizes de UI/UX e Responsividade](./UI_GUIDELINES.md) — Recomendações para a implementação final em Blazor.
+- [Guia de Migração Técnica para Blazor](./BLAZOR_MIGRATION_GUIDE.md) — Detalhes da arquitetura da POC para desenvolvedores.
 
 

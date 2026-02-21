@@ -5,6 +5,8 @@
   const STORAGE_IMPORT = "poc_import_v1";
   const STORAGE_THEME = "poc_theme_v1";
 
+  const POC_VERSION = "1.0.0 - Release 2";
+
   function $(sel) {
     const el = document.querySelector(sel);
     if (!el) throw new Error(`Elemento não encontrado: ${sel}`);
@@ -84,6 +86,31 @@
 
   function saveImport(data) {
     localStorage.setItem(STORAGE_IMPORT, JSON.stringify(data));
+  }
+
+  function mergeImport(newData) {
+    try {
+      const old = loadImport() || { vendasRaw: [], itensRaw: [], propostas: [], pending: [], errors: [] };
+
+      // Merge Raws
+      if (newData.vendasRaw?.length) old.vendasRaw = newData.vendasRaw;
+      if (newData.itensRaw?.length) old.itensRaw = newData.itensRaw;
+
+      // Update metadata
+      old.encoding = newData.encoding || old.encoding;
+      old.propostas = newData.propostas || old.propostas;
+      old.pending = newData.pending || old.pending;
+      old.errors = newData.errors || old.errors;
+      old.vendasInfo = newData.vendasInfo || old.vendasInfo;
+      old.itensInfo = newData.itensInfo || old.itensInfo;
+
+      saveImport(old);
+      return old;
+    } catch (e) {
+      console.error("Erro ao mesclar importação:", e);
+      saveImport(newData);
+      return newData;
+    }
   }
 
   function loadImport() {
@@ -191,6 +218,7 @@
         <header class="topbar">
           <div class="topbar__left">
             <button id="btnToggleNav" class="icon-btn" aria-label="Abrir menu" title="Menu">☰</button>
+            <img src="./images/logo-sperta-consultoria.jpeg" alt="Sperta Consultoria Logo" class="topbar__logo">
             <div class="topbar__title">
               <div class="brand">Smart Consultoria System</div>
               <div class="subtitle">POC (HTML/CSS/JS)</div>
@@ -224,10 +252,15 @@
         <aside id="nav" class="nav nav--closed" aria-label="Navegação">
           <div class="nav__section">
             <div class="nav__sectionTitle">Navegação</div>
-            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultoria,Operador">🏠 Home</a>
+            <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultor,Operador">🏠 Home</a>
             <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
-            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultoria,Operador">📄 Propostas</a>
-            <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultoria,Operador">💰 Comissões</a>
+            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador">📄 Propostas</a>
+            <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultor,Operador">💰 Comissões</a>
+          </div>
+
+          <div class="nav__section">
+            <div class="nav__sectionTitle">Relatórios</div>
+            <a class="nav__item" href="./relatorio-comissao.html" data-route="relatorio-comissao" data-roles="Administrador,Gestor,Consultor,Operador">📊 Comissões</a>
           </div>
 
           <div class="nav__section">
@@ -237,6 +270,10 @@
             <a class="nav__item" href="./cad-colaboradores.html" data-route="cad-colaboradores" data-roles="Administrador,Gestor">🤝 Colaboradores</a>
             <a class="nav__item" href="./cad-produtos.html" data-route="cad-produtos" data-roles="Administrador,Gestor">📦 Produtos</a>
             <a class="nav__item" href="./cad-bancos.html" data-route="cad-bancos" data-roles="Administrador,Gestor">🏦 Bancos</a>
+          </div>
+
+          <div class="nav__footer">
+            Versão ${POC_VERSION}
           </div>
         </aside>
 
@@ -333,6 +370,7 @@
     requireAuth,
     renderShell,
     saveImport,
+    mergeImport,
     loadImport,
     clearImport,
     getProducts: () => PocStore.load("produtos"),

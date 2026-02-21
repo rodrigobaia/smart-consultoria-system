@@ -30,7 +30,7 @@
   <script src="./js/poc.js"></script>
   <script src="./js/comissoes.js"></script>
   <script>
-    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultoria", "Operador"] });
+    Poc.requireAuth({ allowRoles: ["Administrador", "Gestor", "Consultor", "Operador"] });
     Poc.renderShell({ activeRoute: "comissoes" });
     Poc.seed();
     PocComissoes.init();

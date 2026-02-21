@@ -64,6 +64,22 @@
       </div>
 
       <div id="importCross" class="card card--hidden"></div>
+
+      <div id="importFullPreview" class="card card--hidden">
+        <div class="row row--between" style="margin-bottom:15px;">
+          <div>
+            <h2 id="previewTitle" style="margin:0; font-size:18px;">Pré-visualização dos Dados</h2>
+            <p class="muted">Confira todas as colunas e linhas antes de finalizar.</p>
+          </div>
+          <button id="btnConcluirImport" class="btn btn--primary">Concluir Importação</button>
+        </div>
+        <div id="previewTableContainer" class="tableWrap" style="max-height: 500px; overflow: auto;">
+          <!-- Tabela dinâmica aqui -->
+        </div>
+        <div class="actions" style="margin-top:15px;">
+          <button id="btnVoltarImport" class="btn btn--ghost">← Voltar / Corrigir</button>
+        </div>
+      </div>
     </section>
   </div>
 

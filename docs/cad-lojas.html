@@ -34,7 +34,7 @@
     });
     const consultores = allColabs.filter(c => {
       const u = PocStore.load("usuarios").find(usr => usr.username === c.usuario);
-      return u && u.perfil === "Consultoria";
+      return u && u.perfil === "Consultor";
     });
 
     PocCrudPage.render({
@@ -185,7 +185,7 @@
         }
 
         renderAssoc(opHost, operadores, itemOperadores, "Operador");
-        renderAssoc(conHost, consultores, itemConsultores, "Consultoria");
+        renderAssoc(conHost, consultores, itemConsultores, "Consultor");
 
         // --- ABA: FINANCEIRO (PRODUTOS) ---
         const finHost = document.getElementById("customTabContent_financeiro");
@@ -232,7 +232,7 @@
         // --- EXPOR DADOS PARA O SAVE ---
         window._getCustomLojasData = () => {
           const ops = Array.from(document.querySelectorAll('input[data-assoc-type="Operador"]:checked')).map(i => i.getAttribute("data-assoc-id"));
-          const cons = Array.from(document.querySelectorAll('input[data-assoc-type="Consultoria"]:checked')).map(i => i.getAttribute("data-assoc-id"));
+          const cons = Array.from(document.querySelectorAll('input[data-assoc-type="Consultor"]:checked')).map(i => i.getAttribute("data-assoc-id"));
           const comms = {};
           document.querySelectorAll(".prod-comm").forEach(inp => {
             comms[inp.getAttribute("data-prod-id")] = inp.value;
