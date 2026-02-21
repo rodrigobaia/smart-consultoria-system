@@ -215,8 +215,8 @@
 
     const routeMap = {
       "home": ["🏠 Home"],
-      "importacao": ["🏠 Home", "📥 Importação"],
-      "propostas": ["🏠 Home", "📄 Propostas"],
+      "importacao": ["🏠 Home", "💰 Financeiro", "Importação"],
+      "propostas": ["🏠 Home", "💰 Financeiro", "Propostas"],
       "comissoes": ["🏠 Home", "💰 Financeiro", "Comissões"],
       "relatorio-comissao": ["🏠 Home", "📊 Relatórios", "💰 Comissões"],
       "cad-lojas": ["🏠 Home", "🏢 Cadastros", "Lojas"],
@@ -284,12 +284,12 @@
           <div class="nav__section">
             <div class="nav__sectionTitle">Navegação</div>
             <a class="nav__item" href="./home.html" data-route="home" data-roles="Administrador,Gestor,Consultor,Operador">🏠 Home</a>
-            <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
-            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador">📄 Propostas</a>
           </div>
 
           <div class="nav__section">
             <div class="nav__sectionTitle">Financeiro</div>
+            <a class="nav__item" href="./importacao.html" data-route="importacao" data-roles="Administrador,Gestor">📥 Importação</a>
+            <a class="nav__item" href="./propostas.html" data-route="propostas" data-roles="Administrador,Gestor,Consultor,Operador">📄 Propostas</a>
             <a class="nav__item" href="./credenciamento.html" data-route="credenciamento" data-roles="Administrador,Gestor">💳 Credenciamento</a>
             <a class="nav__item" href="./comissoes.html" data-route="comissoes" data-roles="Administrador,Gestor,Consultor,Operador">💰 Comissões</a>
           </div>
